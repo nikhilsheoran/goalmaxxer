@@ -1,6 +1,5 @@
-import { Wallet, Plus, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, BarChart2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Wallet, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { getDashboardData } from "@/app/actions/serverActions";
 import { formatCurrency } from "@/lib/utils";
 import { StockChartDialog } from "@/app/components/StockChartDialog";

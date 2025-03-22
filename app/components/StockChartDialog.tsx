@@ -163,13 +163,13 @@ export function StockChartDialog({ symbol, name, assetType }: StockChartDialogPr
       });
 
       // Sort data by date
-      chartData.sort((a, b) => a.originalDate.getTime() - b.originalDate.getTime());
+      chartData.sort((a: StockData, b: StockData) => a.originalDate.getTime() - b.originalDate.getTime());
 
       // Determine how many data points to display based on time range
       let filteredData = chartData;
       if (chartData.length > 100) {
         const step = Math.ceil(chartData.length / 100);
-        filteredData = chartData.filter((_, index) => index % step === 0 || index === chartData.length - 1);
+        filteredData = chartData.filter((_: any, index: number) => index % step === 0 || index === chartData.length - 1);
         // Always include the last data point
         if (filteredData[filteredData.length - 1] !== chartData[chartData.length - 1]) {
           filteredData.push(chartData[chartData.length - 1]);
@@ -180,7 +180,7 @@ export function StockChartDialog({ symbol, name, assetType }: StockChartDialogPr
 
       // Calculate metrics in INR using all data points
       if (chartData.length > 0) {
-        const values = chartData.map(item => item.closeInr);
+        const values = chartData.map((item: StockData) => item.closeInr);
         const highest = Math.max(...values);
         const lowest = Math.min(...values);
         
