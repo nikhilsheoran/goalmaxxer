@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GoalMaxxer
 
-## Getting Started
+GoalMaxxer is a modern goal-based investment platform developed at the Dezerv X BITS Goa Hackathon 2025. Our mission is to revolutionize personal finance by making goal-based investing accessible, intuitive, and effective for everyone.
 
-First, run the development server:
+## 🚀 Features
 
+- **Personalized Goal Setting**: Define and track your financial goals, from retirement to education
+- **Smart Investment Recommendations**: Get tailored investment suggestions based on your goals
+- **Real-time Progress Tracking**: Monitor your journey towards financial objectives
+- **Secure Authentication**: Powered by Clerk for robust user authentication
+- **Modern UI/UX**: Built with Next.js 15 and Framer Motion for smooth animations
+- **Responsive Design**: Fully responsive interface that works on all devices
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15, React 19, TailwindCSS
+- **Authentication**: Clerk
+- **Animations**: Framer Motion
+- **Styling**: TailwindCSS with custom animations
+- **Development**: TypeScript, ESLint
+- **Performance**: Built with Turbopack for faster development
+
+## 🏃‍♂️ Getting Started
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/goalmaxxer.git
+cd goalmaxxer
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up environment variables:
+Create a `.env.local` file with your Clerk credentials:
+```env
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_publishable_key
+CLERK_SECRET_KEY=your_secret_key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Run the development server:
+```bash
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-To learn more about Next.js, take a look at the following resources:
+## 👥 Team
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+GoalMaxxer was created by Team VibeCoders:
+- Nikhil Sheoran - Full Stack Developer
+- Aashay Naik - Full Stack Developer
+- Utkarsh Misra - Full Stack Developer
+- Mohak Jain - Full Stack Developer
+- Ashit Jain - Full Stack Developer
+- Gaurav Singh - Full Stack Developer
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔒 Security
 
-## Deploy on Vercel
+The application uses Clerk for authentication and protects all dashboard routes. API routes are secured using middleware to ensure data privacy and security.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📝 License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is private and proprietary. All rights reserved.
+
+## 🤝 Contributing
+
+This is a private project created for the Dezerv X BITS Goa Hackathon 2025. Contributions are currently not open to the public.
+
+## 📞 Contact
+
+For any queries regarding the project, please reach out to the team members through their provided social links on the About page.
