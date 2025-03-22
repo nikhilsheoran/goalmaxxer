@@ -1,8 +1,7 @@
-import { ArrowUpRight, Goal, Wallet, Target, Plus, TrendingUp } from "lucide-react";
+import { Goal, Wallet, Target, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { getDashboardData } from "@/app/actions/serverActions";
 import { formatCurrency } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { AddGoalDialog } from "@/app/components/AddGoalDialog";
 
 // Helper function to sort goals by priority
@@ -47,7 +46,7 @@ export default async function OverviewPage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Welcome back!</h1>
-        <p className="text-muted-foreground text-lg">Here's your financial overview for today.</p>
+        <p className="text-muted-foreground text-lg">Here&apos;s your financial overview for today.</p>
       </div>
 
       {/* Quick Stats */}
