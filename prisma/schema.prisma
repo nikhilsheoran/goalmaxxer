@@ -9,6 +9,133 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id             String        @id @default(uuid())
+  email          String        @unique
+  name           String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  birthDate      DateTime?
+  onboardingDone DateTime?
+  riskCapacity   RiskCapacity?
+  Asset          Asset[]
+  goals          Goal[]
+}
+
+model Goal {
+  id                         String        @id @default(uuid())
+  userId                     String
+  name                       String
+  description                String?
+  keywords                   GoalKeyword[]
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
+  currentAmt                 Float
+  targetAmt                  Float
+  targetAmtInflationAdjusted Float
+  targetDate                 DateTime
+  priority                   GoalPriority
+  completedDate              DateTime?
+  businessType               String?
+  customGoalName             String?
+  debtType                   String?
+  desiredCoverageMonths      Int?
+  donationType               String?
+  downPaymentPercentage      Float?
+  employeeCount              Int?
+  familySize                 Int?
+  guestCount                 Int?
+  includeHoneymoon           Boolean?
+  insuranceCoverage          Float?
+  interestRate               Float?
+  isHomeLoan                 Boolean?
+  minimumPayment             Float?
+  monthlyExpenses            Float?
+  monthlyIncome              Float?
+  recurringAmount            Float?
+  retirementAge              Int?
+  riskLevel                  RiskLevel?
+  user                       User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Asset {
+  id            String             @id @default(uuid())
+  userId        String
+  holdingId     String
+  quantity      Float
+  purchasePrice Float
+  purchaseDate  DateTime
+  currentValue  Float?
+  name          String
+  type          AssetType
+  symbol        String?
+  currency      String
+  price         Float?
+  priceDate     DateTime?
+  risk          RiskLevel?
+  sector        String?
+  industry      String?
+  user          User               @relation(fields: [userId], references: [id])
+  performance   AssetPerformance[]
+  etfDetails    ETF?
+  fdDetails     FixedDeposit?
+  mfDetails     MutualFund?
+  stockDetails  Stock?
+
+  @@index([userId])
+}
+
+model Stock {
+  id            String @id @default(uuid())
+  assetId       String @unique
+  marketCap     Float?
+  peRatio       Float?
+  dividendYield Float?
+  asset         Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model ETF {
+  id                String    @id @default(uuid())
+  assetId           String    @unique
+  expenseRatio      Float?
+  nav               Float?
+  navDate           DateTime?
+  distributionYield Float?
+  asset             Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model MutualFund {
+  id            String    @id @default(uuid())
+  assetId       String    @unique
+  nav           Float?
+  navDate       DateTime?
+  expenseRatio  Float?
+  category      String?
+  oneYearReturn Float?
+  asset         Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model FixedDeposit {
+  id           String @id @default(uuid())
+  assetId      String @unique
+  institution  String
+  interestRate Float
+  tenureMonths Int
+  asset        Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade)
+}
+
+model AssetPerformance {
+  id      String     @id @default(uuid())
+  assetId String
+  period  PeriodType
+  return  Float
+  asset   Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
 enum RiskCapacity {
   low
   mid
@@ -58,124 +185,4 @@ enum PeriodType {
   one_month @map("1m")
   one_year  @map("1y")
   ytd
-}
-
-model User {
-  id             String        @id @default(uuid())
-  email          String        @unique
-  name           String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  birthDate      DateTime?
-  onboardingDone DateTime?
-  riskCapacity   RiskCapacity?
-  goals          Goal[]
-  Asset          Asset[]
-}
-
-model Goal {
-  id                         String        @id @default(uuid())
-  userId                     String
-  name                       String
-  description                String
-  keywords                   GoalKeyword[]
-  createdAt                  DateTime      @default(now())
-  updatedAt                  DateTime      @updatedAt
-  currentAmt                 Float
-  targetAmt                  Float
-  targetAmtInflationAdjusted Float
-  targetDate                 DateTime
-  priority                   GoalPriority
-  completedDate              DateTime?
-  user                       User          @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-}
-
-model Asset {
-  id            String     @id @default(uuid())
-  userId        String
-  holdingId     String
-  quantity      Float
-  purchasePrice Float
-  purchaseDate  DateTime
-  currentValue  Float?
-  name          String
-  type          AssetType
-  symbol        String?
-  currency      String
-  price         Float?
-  priceDate     DateTime?
-  risk          RiskLevel?
-  sector        String?
-  industry      String?
-
-  // Relations
-  user         User               @relation(fields: [userId], references: [id])
-  stockDetails Stock?
-  mfDetails    MutualFund?
-  fdDetails    FixedDeposit?
-  etfDetails   ETF?
-  performance  AssetPerformance[]
-
-  @@index([userId])
-}
-
-model Stock {
-  id            String @id @default(uuid())
-  assetId       String @unique
-  marketCap     Float?
-  peRatio       Float?
-  dividendYield Float?
-
-  // Relation
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-}
-
-model ETF {
-  id                String    @id @default(uuid())
-  assetId           String    @unique
-  expenseRatio      Float?
-  nav               Float?
-  navDate           DateTime?
-  distributionYield Float?
-
-  // Relation
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-}
-
-model MutualFund {
-  id            String    @id @default(uuid())
-  assetId       String    @unique
-  nav           Float?
-  navDate       DateTime?
-  expenseRatio  Float?
-  category      String?
-  oneYearReturn Float?
-
-  // Relation
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-}
-
-model FixedDeposit {
-  id           String @id @default(uuid())
-  assetId      String @unique
-  institution  String
-  interestRate Float
-  tenureMonths Int
-
-  // Relation
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-}
-
-model AssetPerformance {
-  id      String     @id @default(uuid())
-  assetId String
-  period  PeriodType
-  return  Float
-
-  // Relation
-  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
-
-  @@index([assetId])
 }
