@@ -425,7 +425,7 @@ How can I help you with GoalMaxxer today?`,
                   className={`max-w-[80%] rounded-lg prose prose-sm dark:prose-invert ${
                     message.role === "user"
                       ? "bg-primary text-primary-foreground p-3"
-                      : "dark:bg-foreground/10 light:bg-foreground/10 dark:text-foreground light:text-foreground p-3"
+                      : "dark:bg-foreground/10 light:bg-foreground/10 dark:text-foreground light:text-foreground"
                   }`}
                 >
                   <MarkdownContent content={message.content} />

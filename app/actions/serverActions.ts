@@ -194,6 +194,7 @@ export async function completeOnboarding(data: OnboardingData) {
   if (!userId) throw new Error("Unauthorized");
 
   const email = clerkUser.emailAddresses[0].emailAddress;
+  const name = clerkUser.firstName + " " + clerkUser.lastName;
 
   try {
     // Update user with onboarding data
@@ -206,6 +207,7 @@ export async function completeOnboarding(data: OnboardingData) {
       create: {
         id: userId,
         email: email,
+        name: name,
         birthDate: data.dateOfBirth,
         onboardingDone: new Date()
       }
@@ -213,7 +215,6 @@ export async function completeOnboarding(data: OnboardingData) {
 
     // Create goal with the data
     await createGoal(data);
-    revalidatePath("/dashboard");
     return { success: true };
   } catch (error) {
     console.error("Error completing onboarding:", error);
@@ -235,7 +236,7 @@ export async function createGoal(data: OnboardingData & GoalData) {
     const goal = await db.goal.create({
       data: {
         userId,
-        name: data.customGoalName || data.selectedGoal,
+        name: data.customGoalName || data.name || data.selectedGoal,
         keywords: [goalKeyword],
         currentAmt: data.upfrontAmount || 0,
         targetAmt: data.cost,
@@ -281,6 +282,7 @@ export async function createGoal(data: OnboardingData & GoalData) {
         customGoalName: data.customGoalName
       },
     });
+    revalidatePath("/dashboard");
 
     return goal;
   } catch (error) {
