@@ -1,7 +1,25 @@
+import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import BenefitsSection from "@/components/BenefitsSection";
+import UseCasesSection from "@/components/UseCasesSection";
+import FeaturesSection from "@/components/FeaturesSection";
+import IntegrationsSection from "@/components/IntegrationsSection";
+import FAQSection from "@/components/FAQSection";
+import CTASection from "@/components/CTASection";
+import Footer from "@/components/Footer";
+
 export default function Home() {
   return (
-    <div>
-      <h1>Hello World</h1>
-    </div>
+    <main className="min-h-screen">
+      <Navbar />
+      <HeroSection />
+      <BenefitsSection />
+      <FeaturesSection />
+      <UseCasesSection />
+      <IntegrationsSection />
+      <FAQSection />
+      <CTASection />
+      <Footer />
+    </main>
   );
 }
