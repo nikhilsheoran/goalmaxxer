@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { COMMON_QUESTIONS, GOALS, Question, Goal } from "@/app/lib/onboarding-config";
+import { COMMON_QUESTIONS, GOALS, Question, Goal } from "@/app/lib/config";
 import { cn } from "@/lib/utils";
 import DatePicker from "@/components/ui/date-picker";
 import { completeOnboarding } from "@/app/actions/serverActions";
