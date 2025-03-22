@@ -103,3 +103,6 @@ export async function getDashboardData() {
     throw new Error("Failed to fetch dashboard data");
   }
 }
+
+export async function getGoalData() {
+}
