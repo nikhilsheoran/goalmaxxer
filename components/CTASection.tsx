@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Goal } from "lucide-react";
+import Link from "next/link";
 
 const CTASection = () => {
   return (
@@ -70,19 +71,23 @@ const CTASection = () => {
                 <Button 
                   size="lg" 
                   className="relative px-8 bg-white text-zinc-900 font-semibold shadow-lg hover:bg-zinc-100 transition-all duration-300 group"
+                  asChild
                 >
-                  <span className="relative z-10 flex items-center gap-2">
-                    Get Started for Free
-                    <ArrowRight className="w-4 h-4" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                  <Link href="/sign-in">
+                    <span className="relative z-10 flex items-center gap-2">
+                      Get Started for Free
+                      <ArrowRight className="w-4 h-4" />
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg" />
+                  </Link>
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="px-8 bg-transparent border-white/30 text-white hover:text-zinc-100 hover:bg-white/10 hover:border-white transition-all duration-300"
+                  asChild
                 >
-                  Schedule a Demo
+                  <Link href="/contact">Schedule a Demo</Link>
                 </Button>
               </motion.div>
             </motion.div>

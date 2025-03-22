@@ -39,6 +39,7 @@ const Navbar = () => {
   };
 
   return (
+    <>
     <motion.header
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -109,7 +110,7 @@ const Navbar = () => {
                   className="hidden sm:flex hover:bg-white/10 dark:hover:bg-white/5 transition-colors"
                   asChild
                 >
-                  <Link href="/login">Log In</Link>
+                  <Link href="/sign-in">Log In</Link>
                 </Button>
                 <Button
                   size="sm"
@@ -121,7 +122,7 @@ const Navbar = () => {
                   )}
                   asChild
                 >
-                  <Link href="/signup">Get Started</Link>
+                  <Link href="/sign-in">Get Started</Link>
                 </Button>
               </div>
             </div>
@@ -201,7 +202,7 @@ const Navbar = () => {
                     )}
                     asChild
                   >
-                    <Link href="/login">Log In</Link>
+                    <Link href="/sign-in">Log In</Link>
                   </Button>
                   <Button
                     size="sm"
@@ -214,7 +215,7 @@ const Navbar = () => {
                     )}
                     asChild
                   >
-                    <Link href="/signup">Get Started</Link>
+                    <Link href="/sign-in">Get Started</Link>
                   </Button>
                 </div>
               </div>
@@ -223,6 +224,8 @@ const Navbar = () => {
         )}
       </AnimatePresence>
     </motion.header>
+      <div className="h-16"></div>
+    </>
   );
 };
 

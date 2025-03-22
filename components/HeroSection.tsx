@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const HeroSection = () => {
   return (
@@ -41,8 +42,8 @@ const HeroSection = () => {
               transition={{ duration: 0.7, delay: 0.7 }}
               className="pt-4"
             >
-              <Button size="lg" className="text-base px-8 py-6">
-                Start Planning Now
+              <Button size="lg" className="text-base px-8 py-6" asChild>
+                <Link href="/sign-in">Start Planning Now</Link>
               </Button>
             </motion.div>
           </motion.div>

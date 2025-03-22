@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border">
+    <footer className="w-full bg-card border-t border-border">
         <div className="p-4 mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm">
             © {new Date().getFullYear()} GoalMaxxer, Made with ❤️ by Team VibeCoders.
