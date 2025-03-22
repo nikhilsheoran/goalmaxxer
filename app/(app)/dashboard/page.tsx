@@ -13,7 +13,7 @@ export default async function Dashboard() {
   const data = await getDashboardData();
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen w-full">
       {/* Main Content */}
       <div className="flex-1 overflow-auto bg-background/50">
         <header className="sticky top-0 z-40 px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
