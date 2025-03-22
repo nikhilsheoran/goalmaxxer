@@ -109,7 +109,6 @@ export async function getDashboardData() {
   }
 }
 
-<<<<<<< HEAD
 interface OnboardingData extends GoalData {
   dateOfBirth: Date;
   selectedGoal: string;
@@ -298,7 +297,6 @@ export async function getOnBoardingDone() {
   if(!user.onboardingDone) return false;
   return true;
 }
-=======
 export async function fetchStockData(symbol: string, period1: number, period2: number, interval: string = '1d') {
   if (!symbol) {
     return {
@@ -533,4 +531,3 @@ function generateMockStockData(symbol: string, period1: number, period2: number,
     };
   }
 }
->>>>>>> 5b46b93 (added graphs for asset)
