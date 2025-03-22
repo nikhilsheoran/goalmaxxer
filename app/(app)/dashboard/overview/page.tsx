@@ -86,7 +86,9 @@ export default async function OverviewPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{data.monthlyGrowth.toFixed(2)}%</div>
+            <div className={`text-3xl font-bold tracking-tight ${data.monthlyGrowth > 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {data.monthlyGrowth > 0 ? '+' : ''}{data.monthlyGrowth.toFixed(2)}%
+            </div>
             <p className="text-xs text-muted-foreground mt-2">vs last month</p>
           </CardContent>
         </Card>
@@ -155,9 +157,6 @@ export default async function OverviewPage() {
               <CardTitle className="text-xl">Top Assets</CardTitle>
               <CardDescription>Your best performing investments</CardDescription>
             </div>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Plus className="h-4 w-4" /> Add Asset
-            </Button>
           </CardHeader>
           <CardContent>
             {data.recentAssets.length > 0 ? (
@@ -197,9 +196,6 @@ export default async function OverviewPage() {
               <div className="text-center py-8">
                 <Wallet className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
                 <p className="text-muted-foreground">No assets added yet.</p>
-                <Button variant="outline" size="sm" className="mt-4 gap-2">
-                  <Plus className="h-4 w-4" /> Add your first asset
-                </Button>
               </div>
             )}
           </CardContent>

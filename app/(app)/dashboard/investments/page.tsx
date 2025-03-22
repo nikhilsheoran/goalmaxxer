@@ -1,8 +1,9 @@
-import { Wallet, Plus, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Wallet, Plus, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, BarChart2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { getDashboardData } from "@/app/actions/serverActions";
 import { formatCurrency } from "@/lib/utils";
+import { StockChartDialog } from "@/app/components/StockChartDialog";
 
 const getAssetTypeIcon = (type: string) => {
   switch (type.toLowerCase()) {
@@ -31,9 +32,7 @@ export default async function InvestmentsPage() {
       </div>
 
       <div className="flex justify-end">
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" /> Add New Asset
-        </Button>
+        {/* Removed Add New Asset button */}
       </div>
       
       <div className="grid grid-cols-1 gap-6">
@@ -111,6 +110,20 @@ export default async function InvestmentsPage() {
                         )}
                       </div>
                     </div>
+                    
+                    {/* Add the Stock Chart Visualization */}
+                    {asset.symbol && (
+                      <div className="mt-4 flex justify-end">
+                        {/* Only show chart button for stocks and mutual funds */}
+                        {['stock', 'mf'].includes(asset.type.toLowerCase()) && (
+                          <StockChartDialog 
+                            symbol={asset.symbol} 
+                            name={asset.name} 
+                            assetType={asset.type.toLowerCase().replace('_', ' ')} 
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -124,9 +137,7 @@ export default async function InvestmentsPage() {
               </div>
               <h3 className="text-xl font-semibold mb-2">No assets yet</h3>
               <p className="text-muted-foreground mb-6">Start by adding your first investment asset!</p>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" /> Add New Asset
-              </Button>
+              {/* Removed Add New Asset button */}
             </CardContent>
           </Card>
         )}

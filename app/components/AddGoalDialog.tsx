@@ -61,13 +61,27 @@ export function AddGoalDialog({ variant = "default", size = "default", className
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={variant} size={size} className={cn("gap-2", className)}>
+        <Button variant="default" size="sm" className={cn("gap-2 w-auto", className)}>
           <Plus className="h-4 w-4" /> {size === "sm" ? "Add Goal" : "Create New Goal"}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] data-[state=open]:!animate-in data-[state=open]:!fade-in-0 data-[state=open]:!zoom-in-95">
         <DialogHeader>
-          <DialogTitle>Create New Goal</DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle>Create New Goal</DialogTitle>
+            <div className="min-w-[120px]">
+              <Select name="priority" required defaultValue="medium">
+                <SelectTrigger className="h-7 text-xs">
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high" className="text-red-600">High</SelectItem>
+                  <SelectItem value="medium" className="text-yellow-600">Medium</SelectItem>
+                  <SelectItem value="low" className="text-blue-600">Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <DialogDescription>
             Set up a new financial goal with your target amount and timeline.
           </DialogDescription>
@@ -83,7 +97,6 @@ export function AddGoalDialog({ variant = "default", size = "default", className
                 required
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Input
@@ -129,20 +142,6 @@ export function AddGoalDialog({ variant = "default", size = "default", className
                 onDateSelect={(range) => setDate(range.from)}
                 variant={"outline"}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select name="priority" required defaultValue="medium">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
