@@ -1,9 +1,11 @@
 "use server";
 
 import { db } from "@/lib/prisma";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { GoalKeyword, GoalPriority, RiskLevel } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { currentUser } from "@clerk/nextjs/server";
+
 export async function getDashboardData() {
   const { userId } = await auth();
   if (!userId) throw new Error("Unauthorized");
