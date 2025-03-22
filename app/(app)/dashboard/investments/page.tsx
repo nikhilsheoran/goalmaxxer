@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { getDashboardData } from "@/app/actions/serverActions";
 import { formatCurrency } from "@/lib/utils";
 import { StockChartDialog } from "@/app/components/StockChartDialog";
+import { AddInvestmentDialog } from "@/app/components/AddInvestmentDialog";
 
 const getAssetTypeIcon = (type: string) => {
   switch (type.toLowerCase()) {
@@ -32,7 +33,7 @@ export default async function InvestmentsPage() {
       </div>
 
       <div className="flex justify-end">
-        {/* Removed Add New Asset button */}
+        <AddInvestmentDialog variant="default" size="default" className="w-auto" />
       </div>
       
       <div className="grid grid-cols-1 gap-6">

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { GoalKeyword, GoalPriority, RiskLevel } from "@prisma/client";
+import { RiskCapacity, GoalKeyword, GoalPriority, AssetType, RiskLevel } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { currentUser } from "@clerk/nextjs/server";
 
@@ -20,7 +20,7 @@ export async function getDashboardData() {
     });
 
     const totalAssetsValue = assets.reduce(
-      (sum, asset) => sum + (asset.currentValue || 0),
+      (sum: number, asset: { currentValue: number | null }) => sum + (asset.currentValue || 0),
       0
     );
 
@@ -51,7 +51,7 @@ export async function getDashboardData() {
     });
 
     const monthlyGrowth =
-      monthlyPerformance.reduce((sum, perf) => sum + perf.return, 0) /
+      monthlyPerformance.reduce((sum: number, perf: { return: number }) => sum + perf.return, 0) /
       (monthlyPerformance.length || 1);
 
     // Get recent goals
@@ -531,5 +531,133 @@ function generateMockStockData(symbol: string, period1: number, period2: number,
       ],
       isMockData: true
     };
+  }
+}
+
+interface AssetData {
+  name: string;
+  type: AssetType;
+  symbol?: string;
+  quantity: number;
+  purchasePrice: number;
+  purchaseDate: Date;
+  risk?: RiskLevel;
+  currency: string;
+  goalId?: string;
+  institution?: string;
+  interestRate?: number;
+  tenureMonths?: number;
+  [key: string]: any;
+}
+
+export async function createAsset(data: AssetData) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    console.log("Creating asset with data:", data);
+    
+    // Create a unique holding ID
+    const holdingId = `${userId}-${Date.now()}`;
+
+    // Create the base asset
+    const asset = await db.asset.create({
+      data: {
+        userId,
+        holdingId,
+        name: data.name,
+        type: data.type,
+        symbol: data.symbol,
+        quantity: data.quantity,
+        purchasePrice: data.purchasePrice,
+        purchaseDate: data.purchaseDate,
+        risk: data.risk,
+        currency: data.currency,
+        currentValue: data.quantity * data.purchasePrice, // Initial value
+      },
+    });
+
+    console.log("Base asset created:", asset);
+
+    // Create type-specific details
+    switch (data.type) {
+      case "stock":
+        await db.stock.create({
+          data: {
+            assetId: asset.id,
+          },
+        });
+        break;
+      case "mf":
+        await db.mutualFund.create({
+          data: {
+            assetId: asset.id,
+          },
+        });
+        break;
+      case "etf":
+        await db.etf.create({
+          data: {
+            assetId: asset.id,
+          },
+        });
+        break;
+      case "fd":
+        await db.fixedDeposit.create({
+          data: {
+            assetId: asset.id,
+            institution: data.institution || "Unknown",
+            interestRate: data.interestRate || 0,
+            tenureMonths: data.tenureMonths || 12,
+          },
+        });
+        break;
+    }
+
+    // If a goal is selected, create the goal-asset relationship
+    if (data.goalId) {
+      console.log("Creating goal-asset relationship with goalId:", data.goalId);
+      await db.goalAsset.create({
+        data: {
+          goalId: data.goalId,
+          assetId: asset.id,
+        },
+      });
+    }
+
+    revalidatePath("/dashboard/investments");
+    return asset;
+  } catch (error) {
+    console.error("Detailed error creating asset:", error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to create asset: ${error.message}`);
+    }
+    throw new Error("Failed to create asset");
+  }
+}
+
+export async function getGoals() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const goals = await db.goal.findMany({
+      where: {
+        userId,
+        completedDate: null,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+      orderBy: {
+        targetDate: "asc",
+      },
+    });
+
+    return { goals };
+  } catch (error) {
+    console.error("Error fetching goals:", error);
+    throw new Error("Failed to fetch goals");
   }
 }
