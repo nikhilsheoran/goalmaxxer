@@ -312,6 +312,86 @@ How can I help you with your financial goals today?`,
             </motion.div>
           )}
         </AnimatePresence>
+        
+        {/* Quick Action Buttons - Only show when no user messages exist */}
+        <AnimatePresence>
+          {messages.every(m => m.role !== "user") && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="mt-3 flex flex-wrap gap-2"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setInput("Show me my portfolio summary");
+                  handleSend();
+                }}
+              >
+                📊 Portfolio Summary
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setInput("What are my current goals?");
+                  handleSend();
+                }}
+              >
+                🎯 View Goals
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setInput("Show my investment performance");
+                  handleSend();
+                }}
+              >
+                📈 Investment Performance
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setInput("Give me investment suggestions based on my goals");
+                  handleSend();
+                }}
+              >
+                💡 Get Suggestions
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setInput("Help me create a new financial goal");
+                  handleSend();
+                }}
+              >
+                ✨ Create Goal
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  setInput("How can I track a new investment?");
+                  handleSend();
+                }}
+              >
+                💰 Track Investment
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <Separator className="dark:border-foreground/10 light:border-foreground/10" />
 
@@ -340,7 +420,7 @@ How can I help you with your financial goals today?`,
                   className={`max-w-[80%] rounded-lg prose prose-sm dark:prose-invert ${
                     message.role === "user"
                       ? "bg-primary text-primary-foreground p-3"
-                      : "dark:bg-foreground/10 light:bg-foreground/10 dark:text-foreground light:text-foreground p-3"
+                      : "dark:bg-foreground/10 light:bg-foreground/10 dark:text-foreground light:text-foreground"
                   }`}
                 >
                   <MarkdownContent content={message.content} />
