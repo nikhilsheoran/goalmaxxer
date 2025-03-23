@@ -132,6 +132,7 @@ export interface GoalData {
   years: number;
   upfrontAmount?: number;
   selectedGoal?: string;
+  priority?: "high" | "medium" | "low";
 
   // Home specific fields
   takingLoan?: "yes" | "no";
@@ -256,7 +257,7 @@ export async function createGoal(data: OnboardingData & GoalData) {
         targetAmt: data.cost,
         targetAmtInflationAdjusted: data.cost * Math.pow(1.06, data.years), // 6% inflation
         targetDate: targetDate.toISOString(),
-        priority: "high" as GoalPriority,
+        priority: (data.priority || "high") as GoalPriority,
 
         // Home specific fields
         isHomeLoan: data.takingLoan === "yes",
@@ -775,7 +776,7 @@ export async function getInvestmentSuggestions(goalData: GoalData) {
      - 'name' (string): The goal's name (e.g., "House Down Payment").
      - 'target_amount' (number): The amount to achieve (e.g., 50000).
      - 'timeframe_years' (number): Years to reach the goal (e.g., 5).
-     - 'risk_level' (string): User’s risk tolerance ("high", "moderate", "low"), derived from a risk assessment.
+     - 'risk_level' (string): User's risk tolerance ("high", "moderate", "low"), derived from a risk assessment.
    - If any field is missing, assume defaults: 'target_amount = 10000', 'timeframe_years = 5', 'risk_level = "moderate"'.
 
 2. **Stock Data Usage:**
@@ -784,7 +785,7 @@ export async function getInvestmentSuggestions(goalData: GoalData) {
      - Moderate Risk: 0.8 <= Sharpe < 1.6
      - Low Risk: Sharpe >= 1.6
    - Each table lists stocks with 'Ticker' (symbol), 'CAGR' (compound annual growth rate), and 'Sharpe Ratio'.
-   - Select stocks only from the category matching the user’s 'risk_level'.
+   - Select stocks only from the category matching the user's 'risk_level'.
 
 3. **Selection Criteria:**
    - Choose 3-5 stocks from the relevant risk category.
@@ -800,10 +801,10 @@ export async function getInvestmentSuggestions(goalData: GoalData) {
      - 'type': Set as "Stock".
      - 'symbol': Ticker from the table (e.g., "METROBRAND.NS").
      - 'quantity': Calculate based on 'target_amount' / (3-5 stocks) / 'purchasePrice' (round to nearest integer).
-     - 'purchasePrice': Estimate as 1000 INR (default, since actual prices aren’t provided).
-     - 'risk': Match user’s 'risk_level' ("high", "moderate", "low").
+     - 'purchasePrice': Estimate as 1000 INR (default, since actual prices aren't provided).
+     - 'risk': Match user's 'risk_level' ("high", "moderate", "low").
      - 'description': Generate a brief description (e.g., "A high-growth stock in the [inferred sector] sector with [CAGR]% CAGR").
-     - 'expectedReturn': Use the stock’s CAGR from the table as the expected annual return.
+     - 'expectedReturn': Use the stock's CAGR from the table as the expected annual return.
      - 'currency': Set as "INR" (Indian Rupees, based on .NS tickers).
 
 5. **Constraints:**

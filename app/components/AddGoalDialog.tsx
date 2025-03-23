@@ -123,6 +123,9 @@ export function AddGoalDialog({
     try {
       setIsLoading(true);
       
+      // Ensure priority is set
+      const priority = goalData.priority || "medium" as GoalPriority;
+      
       // First create the goal
       const goal = await createGoal({
         dateOfBirth: goalData.dateOfBirth || new Date(),
@@ -130,6 +133,7 @@ export function AddGoalDialog({
         cost: goalData.cost,
         years: goalData.years,
         upfrontAmount: goalData.upfrontAmount || 0,
+        priority: priority,
         // Only spread additional fields, not the ones we've already specified
         takingLoan: goalData.takingLoan,
         downPaymentPercentage: goalData.downPaymentPercentage,
@@ -495,7 +499,10 @@ export function AddGoalDialog({
           {step === "goal-specific" && renderGoalSpecificQuestions()}
           {step === "investment-suggestions" && (
             <InvestmentSuggestions
-              goalData={goalData}
+              goalData={{
+                ...goalData,
+                priority: goalData.priority || "medium" as GoalPriority,
+              }}
               onSkip={() => handleCreateGoalWithInvestments(null)}
               onInvestmentSelect={(investments) => handleCreateGoalWithInvestments(investments)}
               isLoading={isLoading}
