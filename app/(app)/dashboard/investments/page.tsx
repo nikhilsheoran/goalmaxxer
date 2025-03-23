@@ -32,7 +32,7 @@ export default async function InvestmentsPage() {
       </div>
 
       <div className="flex justify-end">
-        <AddInvestmentDialog variant="default" size="default" className="w-auto" />
+        <AddInvestmentDialog />
       </div>
       
       <div className="grid grid-cols-1 gap-6">
