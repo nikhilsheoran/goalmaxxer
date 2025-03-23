@@ -14,11 +14,11 @@ import { completeOnboarding, createGoal, GoalData } from "@/app/actions/serverAc
 import { toast } from "sonner";
 import { DialogTitle } from "@radix-ui/react-dialog";
 import { InvestmentSuggestions } from "./InvestmentSuggestions";
+import { AssetType, RiskLevel as PrismaRiskLevel, GoalPriority } from "@prisma/client";
 
-// Define the types to match InvestmentSuggestions component
-type AssetType = "stock" | "mf" | "etf" | "fd";
+// Remove or comment out the local type definition
+// type AssetType = "stock" | "mf" | "etf" | "fd";
 type RiskLevel = "high" | "moderate" | "low";
-type GoalPriority = "high" | "medium" | "low";
 
 interface UserData {
   dateOfBirth?: Date;

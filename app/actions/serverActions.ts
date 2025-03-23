@@ -135,8 +135,7 @@ export interface GoalData {
   cost: number;
   years: number;
   upfrontAmount?: number;
-  selectedGoal?: string;
-  priority?: "high" | "medium" | "low";
+  priority?: GoalPriority;
   riskLevel?: "High" | "Medium" | "Low";
   takingLoan?: "yes" | "no";
   downPaymentPercentage?: number;
@@ -156,7 +155,6 @@ export interface GoalData {
   interestRate?: number;
   minimumPayment?: number;
   customGoalName?: string;
-  priority?: GoalPriority;
   targetDate?: Date;
   selectedGoal?: string;
 }
