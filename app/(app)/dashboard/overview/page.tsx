@@ -178,13 +178,13 @@ export default async function OverviewPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">{formatCurrency(asset.currentValue || 0)}</p>
-                      {asset.currentValue && asset.purchasePrice && (
+                      {(asset.growthPercentage !== undefined) && (
                         <p className={`text-sm ${
-                          ((asset.currentValue - asset.purchasePrice) / asset.purchasePrice) > 0
+                          asset.growthPercentage > 0
                             ? 'text-green-500'
                             : 'text-red-500'
                         }`}>
-                          {((asset.currentValue - asset.purchasePrice) / asset.purchasePrice * 100).toFixed(2)}%
+                          {asset.growthPercentage > 0 ? '+' : ''}{asset.growthPercentage.toFixed(2)}%
                         </p>
                       )}
                     </div>
