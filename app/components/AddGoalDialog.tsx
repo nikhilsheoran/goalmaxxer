@@ -123,11 +123,17 @@ export function AddGoalDialog({
     try {
       setIsLoading(true);
       
+      // Calculate target amount for emergency fund
+      let targetAmount = goalData.cost;
+      if (goalData.selectedGoal === "emergencyFund" && goalData.monthlyIncome && goalData.desiredCoverageMonths) {
+        targetAmount = goalData.monthlyIncome * goalData.desiredCoverageMonths;
+      }
+      
       // First create the goal
       const goal = await createGoal({
         dateOfBirth: goalData.dateOfBirth || new Date(),
         selectedGoal: goalData.selectedGoal || "",
-        cost: goalData.cost,
+        cost: targetAmount, // Use the calculated target amount
         years: goalData.years,
         upfrontAmount: goalData.upfrontAmount || 0,
         // Only spread additional fields, not the ones we've already specified
