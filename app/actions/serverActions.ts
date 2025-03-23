@@ -868,7 +868,6 @@ POWERINDIA.NS 31.27%          1.79
    INDIANB.NS 4.94%          0.78
 KARURVYSYA.NS 5.41%          0.78
   NLCINDIA.NS 4.45%          0.78
-       IRB.NS 0.79%          0.77
        UBL.NS 3.96%          0.77
 BIRLACORPN.NS 7.07%          0.76
 
@@ -908,16 +907,16 @@ Scheme Name   CAGR (%)  Sharpe Ratio  Volatility (%)
 
 AVERAGE PERFORMING LOW VOLATILITY MUTUAL FUNDS:
 Scheme Name  CAGR (%)  Sharpe Ratio  Volatility (%)
-168  DWS Hybrid Fixed TErm Fund - Series 1 - Divide...  1.474459      0.704136        3.095453
-166      HSBC Corporate Bond Fund - Direct Annual IDCW  1.451648      3.050533        2.506863
-161              IDBI Short Term Bond Fund Weekly IDCW  1.350508      0.455068        1.823678
-171  Mirae Asset Nifty AAA PSU Bond Plus SDL Apr 20...  1.618769      6.151869        0.476450
-172                       Bharat Bond ETF - April 2023  1.659809      4.296321        0.699076
-174  DSP BlackRock Strategic Bond Fund - Regular Pl...  1.697725      1.270030        1.605497
-155  SBI Liquid Fund - Direct Paln - Fortnightly In...  1.108649      1.084264        0.700632
-153  CANARA ROBECO GILT FUND - DIRECT PLAN - GROWTH...  1.051458      0.619796        2.986713
-181  Kotak Equity Arbitrage Fund -Payout of Income ...  1.887915      3.258676        2.194480
-150  Edelweiss Corporate Bond Fund - Regular Plan -...  0.976599      0.343365        3.055290
+168  DWS Hybrid Fixed TErm Fund - Series 1 - Divide...  11.474459      0.704136        3.095453
+166      HSBC Corporate Bond Fund - Direct Annual IDCW  11.451648      3.050533        2.506863
+161              IDBI Short Term Bond Fund Weekly IDCW  15.350508      0.455068        1.823678
+171  Mirae Asset Nifty AAA PSU Bond Plus SDL Apr 20...  11.618769      6.151869        0.476450
+172                       Bharat Bond ETF - April 2023  11.659809      4.296321        0.699076
+174  DSP BlackRock Strategic Bond Fund - Regular Pl...  14.697725      1.270030        1.605497
+155  SBI Liquid Fund - Direct Paln - Fortnightly In...  11.108649      1.084264        0.700632
+153  CANARA ROBECO GILT FUND - DIRECT PLAN - GROWTH...  12.051458      0.619796        2.986713
+181  Kotak Equity Arbitrage Fund -Payout of Income ...  11.887915      3.258676        2.194480
+150  Edelweiss Corporate Bond Fund - Regular Plan -...  9.976599      0.343365        3.055290
       `,
       prompt: `Generate investment suggestions for the following goal: ${JSON.stringify(
         goalData
