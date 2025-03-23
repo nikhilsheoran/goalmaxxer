@@ -30,11 +30,12 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { GoalKeyword, GoalPriority, RiskLevel } from "@prisma/client";
-import { createGoal } from "@/app/actions/serverActions";
+import { createGoal, createAsset, GoalData } from "@/app/actions/serverActions";
 import { useToast } from "@/components/ui/use-toast";
 import { CalendarDatePicker } from "@/components/ui/calendar-date-picker";
 import { COMMON_QUESTIONS, GOALS } from "@/app/lib/config";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { InvestmentSuggestions } from "./InvestmentSuggestions";
 
 interface AddGoalDialogProps {
   variant?: "default" | "outline";
@@ -43,14 +44,35 @@ interface AddGoalDialogProps {
   onSuccess?: () => void;
 }
 
-type Step = "goal-selection" | "goal-specific";
+type Step = "goal-selection" | "goal-specific" | "investment-suggestions";
 
-interface GoalData {
-  selectedGoal?: string;
-  cost?: number;
-  years?: number;
-  upfrontAmount?: number;
-  [key: string]: any;
+interface LocalGoalData extends GoalData {
+  dateOfBirth?: Date;
+  [key: string]: string | number | Date | boolean | undefined;
+}
+
+type QuestionValue = string | number | Date | boolean;
+type QuestionType = 'text' | 'number' | 'date' | 'radio' | 'custom';
+type OptionValue = string | number;
+
+interface Question {
+  id: string;
+  title: string;
+  type: QuestionType;
+  placeholder?: string;
+  description?: string;
+  validation?: {
+    required?: boolean;
+    min?: number;
+    max?: number;
+    step?: number;
+    pattern?: RegExp;
+    errorMessage?: string;
+    custom?: (value: QuestionValue) => boolean;
+  };
+  calculateInfo?: (data: LocalGoalData) => string | undefined | null;
+  showWhen?: (data: LocalGoalData) => boolean;
+  options?: Array<{ value: OptionValue; label: string }>;
 }
 
 export function AddGoalDialog({
@@ -62,7 +84,10 @@ export function AddGoalDialog({
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<Step>("goal-selection");
   const [currentGoalStep, setCurrentGoalStep] = useState(0);
-  const [goalData, setGoalData] = useState<GoalData>({});
+  const [goalData, setGoalData] = useState<LocalGoalData>({
+    cost: 0,
+    years: 0,
+  });
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -82,28 +107,69 @@ export function AddGoalDialog({
     if (selectedGoal && currentGoalStep < selectedGoal.questions.length - 1) {
       setCurrentGoalStep(currentGoalStep + 1);
     } else {
-      submitGoal();
+      moveToInvestmentSuggestions();
     }
   };
 
-  const submitGoal = async () => {
+  const moveToInvestmentSuggestions = () => {
+    if (!goalData.selectedGoal) {
+      setError("Missing required data");
+      return;
+    }
+    setStep("investment-suggestions");
+  };
+
+  const handleCreateGoalWithInvestments = async (investments: any[] | null) => {
     try {
-      if (!goalData.selectedGoal) throw new Error("Missing required data");
+      setIsLoading(true);
       
-      await createGoal({
+      // First create the goal
+      const goal = await createGoal({
         dateOfBirth: goalData.dateOfBirth || new Date(),
-        selectedGoal: goalData.selectedGoal,
-        cost: goalData.cost || 0,
-        years: goalData.years || 0,
+        selectedGoal: goalData.selectedGoal || "",
+        cost: goalData.cost,
+        years: goalData.years,
         upfrontAmount: goalData.upfrontAmount || 0,
-        ...goalData,
+        // Only spread additional fields, not the ones we've already specified
+        takingLoan: goalData.takingLoan,
+        downPaymentPercentage: goalData.downPaymentPercentage,
+        riskLevel: goalData.riskLevel,
+        monthlyExpenses: goalData.monthlyExpenses,
+        retirementAge: goalData.retirementAge,
+        guestCount: goalData.guestCount,
+        includeHoneymoon: goalData.includeHoneymoon,
+        monthlyIncome: goalData.monthlyIncome,
+        desiredCoverageMonths: goalData.desiredCoverageMonths,
+        businessType: goalData.businessType,
+        employeeCount: goalData.employeeCount,
+        insuranceCoverage: goalData.insuranceCoverage,
+        familySize: goalData.familySize,
+        donationType: goalData.donationType,
+        recurringAmount: goalData.recurringAmount,
+        debtType: goalData.debtType,
+        interestRate: goalData.interestRate,
+        minimumPayment: goalData.minimumPayment,
+        customGoalName: goalData.customGoalName,
       });
 
+      // If investments are provided, create them
+      if (investments && investments.length > 0) {
+        for (const investment of investments) {
+          await createAsset({
+            ...investment,
+            purchaseDate: new Date(),
+            goalId: goal.id,
+          });
+        }
+      }
+
       setOpen(false);
-      toast.success("Goal created");
+      toast.success("Goal created successfully");
       onSuccess?.();
     } catch (error: any) {
       toast.error("Error creating goal", { description: error.message });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -125,25 +191,27 @@ export function AddGoalDialog({
       return false;
     }
 
-    if (validation.min !== undefined && value < validation.min) {
-      setError(
-        `${currentQuestion.title}: ${
-          validation.errorMessage || `Value must be at least ${validation.min}`
-        }`
-      );
-      return false;
+    if (typeof value === 'number') {
+      if (validation.min !== undefined && value < validation.min) {
+        setError(
+          `${currentQuestion.title}: ${
+            validation.errorMessage || `Value must be at least ${validation.min}`
+          }`
+        );
+        return false;
+      }
+
+      if (validation.max !== undefined && value > validation.max) {
+        setError(
+          `${currentQuestion.title}: ${
+            validation.errorMessage || `Value must be at most ${validation.max}`
+          }`
+        );
+        return false;
+      }
     }
 
-    if (validation.max !== undefined && value > validation.max) {
-      setError(
-        `${currentQuestion.title}: ${
-          validation.errorMessage || `Value must be at most ${validation.max}`
-        }`
-      );
-      return false;
-    }
-
-    if (validation.pattern && !validation.pattern.test(value)) {
+    if (validation.pattern && typeof value === 'string' && !validation.pattern.test(value)) {
       setError(
         `${currentQuestion.title}: ${
           validation.errorMessage || "Invalid format"
@@ -152,7 +220,7 @@ export function AddGoalDialog({
       return false;
     }
 
-    if (validation.custom && !validation.custom(value)) {
+    if (validation.custom && !validation.custom(value as QuestionValue)) {
       setError(
         `${currentQuestion.title}: ${
           validation.errorMessage || "Invalid value"
@@ -177,7 +245,7 @@ export function AddGoalDialog({
         if (selectedGoal && currentGoalStep < selectedGoal.questions.length - 1) {
           setCurrentGoalStep(currentGoalStep + 1);
         } else {
-          await submitGoal();
+          moveToInvestmentSuggestions();
         }
       }
     }
@@ -185,14 +253,16 @@ export function AddGoalDialog({
   };
 
   const handleBack = () => {
+    setError("");
     if (step === "goal-specific") {
       if (currentGoalStep > 0) {
         setCurrentGoalStep(currentGoalStep - 1);
       } else {
         setStep("goal-selection");
       }
+    } else if (step === "investment-suggestions") {
+      setStep("goal-specific");
     }
-    setError("");
   };
 
   const handleInputChange = (id: string, value: any) => {
@@ -206,9 +276,10 @@ export function AddGoalDialog({
     }
   };
 
-  const renderQuestion = (question: any) => {
+  const renderQuestion = (question: Question) => {
     const value = goalData[question.id];
-    const showInfo = question.calculateInfo?.(goalData);
+    const calculatedInfo = question.calculateInfo?.(goalData);
+    const showInfo = calculatedInfo || undefined;
 
     switch (question.type) {
       case "text":
@@ -218,7 +289,7 @@ export function AddGoalDialog({
             <Input
               id={question.id}
               placeholder={question.placeholder}
-              value={value || ""}
+              value={typeof value === 'string' ? value : ''}
               onChange={(e) => handleInputChange(question.id, e.target.value)}
               onKeyDown={handleKeyDown}
             />
@@ -235,7 +306,7 @@ export function AddGoalDialog({
               id={question.id}
               type="number"
               placeholder={question.placeholder}
-              value={value ?? ""}
+              value={typeof value === 'number' ? value : ''}
               min={question.validation?.min}
               max={question.validation?.max}
               step={question.validation?.step || 1}
@@ -258,7 +329,10 @@ export function AddGoalDialog({
             <Label>{question.title}</Label>
             <div onKeyDown={handleKeyDown}>
               <CalendarDatePicker
-                date={{ from: value || new Date(), to: value || new Date() }}
+                date={{ 
+                  from: value instanceof Date ? value : new Date(), 
+                  to: value instanceof Date ? value : new Date() 
+                }}
                 numberOfMonths={1}
                 onDateSelect={(range) =>
                   handleInputChange(question.id, range.from)
@@ -276,13 +350,13 @@ export function AddGoalDialog({
           <div className="space-y-2" onKeyDown={handleKeyDown}>
             <Label>{question.title}</Label>
             <RadioGroup
-              value={value || ""}
+              value={String(value || '')}
               onValueChange={(value) => handleInputChange(question.id, value)}
             >
-              {question.options?.map((option: any) => (
-                <div key={option.value} className="flex items-center space-x-2">
+              {question.options?.map((option) => (
+                <div key={String(option.value)} className="flex items-center space-x-2">
                   <RadioGroupItem
-                    value={option.value}
+                    value={String(option.value)}
                     id={`${question.id}-${option.value}`}
                   />
                   <Label htmlFor={`${question.id}-${option.value}`}>
@@ -365,17 +439,20 @@ export function AddGoalDialog({
     );
   };
 
+  const resetForm = () => {
+    setStep("goal-selection");
+    setCurrentGoalStep(0);
+    setGoalData({ cost: 0, years: 0, dateOfBirth: new Date() });
+    setError("");
+  };
+
   return (
     <Dialog
       open={open}
       onOpenChange={(newOpen) => {
         setOpen(newOpen);
         if (!newOpen) {
-          // Reset the form when dialog is closed
-          setStep("goal-selection");
-          setCurrentGoalStep(0);
-          setGoalData({ dateOfBirth: new Date() });
-          setError("");
+          resetForm();
         }
       }}
     >
@@ -393,7 +470,9 @@ export function AddGoalDialog({
         <DialogHeader>
           <DialogTitle>Create New Goal</DialogTitle>
           <DialogDescription>
-            Set up a new financial goal with your target amount and timeline.
+            {step === "investment-suggestions"
+              ? "Choose investments for your goal"
+              : "Set up a new financial goal with your target amount and timeline."}
           </DialogDescription>
         </DialogHeader>
 
@@ -411,30 +490,41 @@ export function AddGoalDialog({
           </div>
         )}
 
-        <div className="min-h-[300px]">
-          {step === "goal-selection"
-            ? renderGoalSelection()
-            : renderGoalSpecificQuestions()}
+        <div className="min-h-[300px] w-full">
+          {step === "goal-selection" && renderGoalSelection()}
+          {step === "goal-specific" && renderGoalSpecificQuestions()}
+          {step === "investment-suggestions" && (
+            <InvestmentSuggestions
+              goalData={goalData}
+              onSkip={() => handleCreateGoalWithInvestments(null)}
+              onInvestmentSelect={(investments) => handleCreateGoalWithInvestments(investments)}
+              isLoading={isLoading}
+            />
+          )}
         </div>
 
         {/* Error message */}
         {error && <p className="text-destructive text-sm">{error}</p>}
 
-        <DialogFooter className="gap-2">
-          {step !== "goal-selection" && (
-            <Button variant="outline" onClick={handleBack} type="button">
-              Back
+        {/* Footer buttons */}
+        {step !== "investment-suggestions" && (
+          <DialogFooter className="gap-2">
+            {step !== "goal-selection" && (
+              <Button variant="outline" onClick={handleBack} type="button">
+                Back
+              </Button>
+            )}
+            <Button onClick={handleNext} disabled={isLoading}>
+              {step === "goal-specific" &&
+              selectedGoal &&
+              currentGoalStep === selectedGoal.questions.length - 1
+                ? "Continue to Investments"
+                : "Continue"}
             </Button>
-          )}
-          <Button onClick={handleNext} disabled={isLoading}>
-            {step === "goal-specific" &&
-            selectedGoal &&
-            currentGoalStep === selectedGoal.questions.length - 1
-              ? "Create Goal"
-              : "Continue"}
-          </Button>
-        </DialogFooter>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );
 }
+
