@@ -21,7 +21,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CalendarIcon, Plus, TrendingUp, ArrowUpRight, Wallet } from "lucide-react";
+import {
+  CalendarIcon,
+  Plus,
+  TrendingUp,
+  ArrowUpRight,
+  Wallet,
+} from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -30,7 +36,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { AssetType, RiskLevel } from "@prisma/client";
-import { createAsset, getGoals } from "@/app/actions/serverActions";
+import { AssetData, createAsset, getGoals } from "@/app/actions/serverActions";
 import { useToast } from "@/components/ui/use-toast";
 import { CalendarDatePicker } from "@/components/ui/calendar-date-picker";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -57,32 +63,34 @@ interface InvestmentData {
 
 const INVESTMENT_TYPES = [
   {
-    id: "STOCK",
+    id: "stock",
     name: "Stock",
     icon: TrendingUp,
     description: "Individual company shares",
   },
   {
-    id: "MF",
+    id: "mf",
     name: "Mutual Fund",
     icon: ArrowUpRight,
     description: "Pooled investment funds",
   },
   {
-    id: "ETF",
+    id: "etf",
     name: "ETF",
     icon: TrendingUp,
     description: "Exchange-traded funds",
   },
   {
-    id: "FD",
+    id: "fd",
     name: "Fixed Deposit",
     icon: Wallet,
     description: "Bank fixed deposits",
   },
 ];
 
-export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogProps) {
+export function AddInvestmentDialog({
+  onInvestmentAdded,
+}: AddInvestmentDialogProps) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -90,7 +98,7 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
   const [goals, setGoals] = useState<Array<{ id: string; name: string }>>([]);
   const router = useRouter();
 
-  const [formData, setFormData] = useState<InvestmentData>({
+  const [formData, setFormData] = useState<AssetData>({
     name: "",
     type: "stock",
     symbol: "",
@@ -101,36 +109,50 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
     currency: "INR",
   });
 
-  const investmentTypes = [
-    { value: "stock", label: "Stock" },
-    { value: "mf", label: "Mutual Fund" },
-    { value: "etf", label: "ETF" },
-    { value: "fd", label: "Fixed Deposit" },
-  ];
+  const totalSteps = 3;
 
-  const handleNext = () => {
-    if (validateStep1()) {
-      setStep(2);
-    }
+  const resetForm = () => {
+    setStep(1);
+    setFormData({
+      name: "",
+      type: "stock",
+      symbol: "",
+      quantity: 0,
+      purchasePrice: 0,
+      purchaseDate: new Date(),
+      risk: "moderate",
+      currency: "INR",
+    });
+    setError(null);
+    setLoading(false);
   };
 
-  const handleNext2 = () => {
-    if (validateStep2()) {
-      setStep(3);
-      fetchGoals();
+  const handleNext = async () => {
+    setError(null);
+
+    if (step === 1) {
+      if (validateStep1()) {
+        setStep(2);
+      }
+    } else if (step === 2) {
+      if (validateStep2()) {
+        setStep(3);
+        await fetchGoals();
+      }
+    } else {
+      await handleSubmit();
     }
   };
 
   const handleBack = () => {
-    if (step === 3) {
-      setStep(2);
-    } else {
-      setStep(1);
+    setError(null);
+    if (step > 1) {
+      setStep(step - 1);
     }
   };
 
   const validateStep1 = () => {
-    if (!formData.name) {
+    if (!formData.name?.trim()) {
       setError("Please enter an investment name");
       return false;
     }
@@ -138,24 +160,26 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
       setError("Please select an investment type");
       return false;
     }
-    if (!formData.symbol) {
+    if (!formData.symbol?.trim()) {
       setError("Please enter a ticker symbol");
       return false;
     }
-    setError(null);
     return true;
   };
 
   const validateStep2 = () => {
-    if (formData.quantity <= 0) {
+    if (!formData.quantity || formData.quantity <= 0) {
       setError("Please enter a valid quantity");
       return false;
     }
-    if (formData.purchasePrice <= 0) {
+    if (!formData.purchasePrice || formData.purchasePrice <= 0) {
       setError("Please enter a valid purchase price");
       return false;
     }
-    setError(null);
+    if (!formData.purchaseDate) {
+      setError("Please select a purchase date");
+      return false;
+    }
     return true;
   };
 
@@ -164,17 +188,20 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
       setError("Please select a goal");
       return false;
     }
-    setError(null);
     return true;
   };
 
   const fetchGoals = async () => {
     try {
       const data = await getGoals();
+      if (!data?.goals?.length) {
+        setError("No goals found. Please create a goal first.");
+        return;
+      }
       setGoals(data.goals);
     } catch (error) {
       console.error("Error fetching goals:", error);
-      setError("Failed to fetch goals");
+      setError("Failed to fetch goals. Please try again.");
     }
   };
 
@@ -213,9 +240,7 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) =>
-            setFormData({ ...formData, name: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="Enter investment name"
         />
       </div>
@@ -232,9 +257,9 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
             <SelectValue placeholder="Select investment type" />
           </SelectTrigger>
           <SelectContent>
-            {investmentTypes.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
+            {INVESTMENT_TYPES.map((type) => (
+              <SelectItem key={type.id} value={type.id}>
+                {type.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -246,9 +271,7 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
         <Input
           id="symbol"
           value={formData.symbol}
-          onChange={(e) =>
-            setFormData({ ...formData, symbol: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
           placeholder="Enter ticker symbol (e.g., RELIANCE)"
         />
       </div>
@@ -277,7 +300,10 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
           type="number"
           value={formData.purchasePrice}
           onChange={(e) =>
-            setFormData({ ...formData, purchasePrice: parseFloat(e.target.value) })
+            setFormData({
+              ...formData,
+              purchasePrice: parseFloat(e.target.value),
+            })
           }
           placeholder="Enter purchase price in INR"
         />
@@ -323,8 +349,11 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
         <Label htmlFor="goal">Select Goal</Label>
         <Select
           value={formData.goalId}
-          onValueChange={(value) =>
-            setFormData({ ...formData, goalId: value })
+          onValueChange={(value) => 
+            setFormData({ 
+              ...formData, 
+              goalId: value
+            })
           }
         >
           <SelectTrigger>
@@ -348,76 +377,77 @@ export function AddInvestmentDialog({ onInvestmentAdded }: AddInvestmentDialogPr
       onOpenChange={(newOpen) => {
         setOpen(newOpen);
         if (!newOpen) {
-          // Reset the form when dialog is closed
-          setStep(1);
-          setFormData({
-            name: "",
-            type: "stock",
-            symbol: "",
-            quantity: 0,
-            purchasePrice: 0,
-            purchaseDate: new Date(),
-            risk: "moderate",
-            currency: "INR",
-          });
-          setError(null);
+          resetForm();
         }
       }}
     >
       <DialogTrigger asChild>
-        <Button>Track Investment</Button>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" /> Track Investment
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[425px] p-0 border-none overflow-hidden">
+        <div className="h-1 bg-secondary w-full">
+          <div
+            className="h-full bg-primary transition-all duration-300"
+            style={{
+              width: `${(step / totalSteps) * 100}%`,
+            }}
+          />
+        </div>
+        <DialogHeader className="p-3">
           <DialogTitle>Track New Investment</DialogTitle>
           <DialogDescription>
             Add details about your investment to track its performance.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Progress value={(step / 3) * 100} className="w-full" />
-          
+        <div className="min-h-[300px] space-y-6 p-3">
           {error && (
-            <div className="text-sm text-red-500">{error}</div>
+            <div className="p-3 bg-destructive/10 text-destructive rounded-lg">
+              <p className="text-sm">{error}</p>
+            </div>
           )}
 
-          {step === 1 ? renderStep1() : step === 2 ? renderStep2() : renderStep3()}
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">
+              {step === 1
+                ? "Investment Details"
+                : step === 2
+                ? "Purchase Information"
+                : "Goal Selection"}
+            </h2>
+            <p className="text-muted-foreground text-xs bg-secondary w-fit py-1 px-2 rounded-md border">
+              Step {step} of {totalSteps}
+            </p>
+          </div>
 
-          <div className="flex justify-between">
+          {step === 1
+            ? renderStep1()
+            : step === 2
+            ? renderStep2()
+            : renderStep3()}
+
+          <div className="flex justify-between pt-4">
             {step > 1 && (
-              <Button variant="outline" onClick={handleBack}>
+              <Button variant="outline" onClick={handleBack} disabled={loading}>
                 Back
               </Button>
             )}
-            {step === 1 ? (
-              <Button
-                className="ml-auto"
-                onClick={handleNext}
-                disabled={loading}
-              >
-                Next
-              </Button>
-            ) : step === 2 ? (
-              <Button
-                className="ml-auto"
-                onClick={handleNext2}
-                disabled={loading}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                className="ml-auto"
-                onClick={handleSubmit}
-                disabled={loading}
-              >
-                {loading ? "Adding..." : "Add Investment"}
-              </Button>
-            )}
+            <Button
+              className={cn("ml-auto", step === 1 && "w-full")}
+              onClick={handleNext}
+              disabled={loading}
+            >
+              {loading
+                ? "Processing..."
+                : step === totalSteps
+                ? "Add Investment"
+                : "Continue"}
+            </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-} 
+}

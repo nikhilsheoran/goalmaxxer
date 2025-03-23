@@ -56,7 +56,7 @@ model Goal {
   retirementAge              Int?
   riskLevel                  RiskLevel?
   user                       User          @relation(fields: [userId], references: [id])
-  assets                     GoalAsset[]
+  assets                     Asset[]
 
   @@index([userId])
 }
@@ -79,14 +79,16 @@ model Asset {
   sector        String?
   industry      String?
   user          User               @relation(fields: [userId], references: [id])
+  goal          Goal?             @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  goalId        String?
   performance   AssetPerformance[]
   etfDetails    ETF?
   fdDetails     FixedDeposit?
   mfDetails     MutualFund?
   stockDetails  Stock?
-  goals         GoalAsset[]
 
   @@index([userId])
+  @@index([goalId])
 }
 
 model Stock {
@@ -135,19 +137,6 @@ model AssetPerformance {
   return  Float
   asset   Asset      @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
-  @@index([assetId])
-}
-
-model GoalAsset {
-  id        String   @id @default(uuid())
-  goalId    String
-  assetId   String
-  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([goalId, assetId])
-  @@index([goalId])
   @@index([assetId])
 }
 
