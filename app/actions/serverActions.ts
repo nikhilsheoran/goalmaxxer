@@ -14,6 +14,7 @@ import { currentUser } from "@clerk/nextjs/server";
 import { generateObject } from "ai";
 import { google } from "@ai-sdk/google";
 import { z } from "zod";
+import { calculateStockGrowth } from "../utils/stockGrowth";
 
 export async function getDashboardData() {
   const { userId } = await auth();
@@ -110,12 +111,71 @@ export async function getDashboardData() {
       },
     });
 
+    // Process assets and calculate growth based on historical data
+    const assetsWithUpdatedData = await Promise.all(
+      recentAssets.map(async (asset) => {
+        // For assets with symbols, try to calculate growth using historical data
+        if (asset.symbol) {
+          try {
+            // Use our utility function to calculate growth based on purchase date
+            const result = await calculateStockGrowth(
+              asset.symbol, 
+              new Date(asset.purchaseDate),
+              asset.quantity
+            );
+            
+            if (result.success) {
+              return {
+                ...asset,
+                currentValue: result.currentValue,
+                growthPercentage: result.growthPercentage,
+                historicalPrice: result.historicalPrice,
+                historicalDate: result.historicalDate.toLocaleDateString(),
+                latestPrice: result.latestPrice
+              };
+            } else {
+              console.log(`Using fallback for ${asset.name}: ${result.message}`);
+            }
+          } catch (error) {
+            console.error(`Error processing growth for ${asset.name}:`, error);
+          }
+        }
+        
+        // Fallback: calculate growth using the stored currentValue and purchasePrice
+        const totalPurchaseValue = asset.quantity * asset.purchasePrice;
+        let growthPercentage = 0;
+        
+        if (asset.currentValue && totalPurchaseValue > 0) {
+          growthPercentage = ((asset.currentValue - totalPurchaseValue) / totalPurchaseValue) * 100;
+          
+          // Safeguard against NaN, Infinity or extreme values
+          if (isNaN(growthPercentage) || !isFinite(growthPercentage)) {
+            growthPercentage = 0;
+            console.log(`${asset.name}: Invalid growth calculation, using default (0%)`);
+          } else if (Math.abs(growthPercentage) > 1000) {
+            // Cap extremely large growth values at 1000% to avoid display issues
+            growthPercentage = growthPercentage > 0 ? 1000 : -1000;
+            console.log(`${asset.name}: Capping excessive growth value at ${growthPercentage}%`);
+          } else {
+            console.log(`${asset.name} (fallback): Current value: ${asset.currentValue}, Purchase value: ${totalPurchaseValue}, Growth: ${growthPercentage.toFixed(2)}%`);
+          }
+        } else {
+          console.log(`${asset.name}: Using default growth (0%) due to missing data`);
+        }
+        
+        return {
+          ...asset,
+          growthPercentage,
+        };
+      })
+    );
+
     return {
       totalAssetsValue,
       activeGoalsCount,
       monthlyGrowth,
       goals,
-      recentAssets,
+      recentAssets: assetsWithUpdatedData,
     };
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
@@ -327,12 +387,33 @@ export async function fetchStockData(
   }
 
   try {
+    // Validate date range
+    const now = Math.floor(Date.now() / 1000);
+    
+    // Ensure period1 is not after period2
+    if (period1 > period2) {
+      console.log(`Warning: Invalid date range for ${symbol}, swapping dates`);
+      [period1, period2] = [period2, period1];
+    }
+    
+    // Ensure we're not fetching data from the future
+    if (period2 > now) {
+      period2 = now;
+    }
+    
+    // Ensure we have a reasonable range (at least 1 day)
+    if (period2 - period1 < 86400) {
+      period1 = period2 - 86400 * 30; // Default to 30 days
+    }
+    
     // Set up AbortController for timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
     // Yahoo Finance API URL
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${period1}&period2=${period2}&interval=${interval}&includePrePost=false`;
+
+    console.log(`Fetching ${symbol} from Yahoo Finance: ${new Date(period1 * 1000).toLocaleDateString()} to ${new Date(period2 * 1000).toLocaleDateString()}`);
 
     const response = await fetch(url, {
       headers: {
@@ -445,6 +526,23 @@ function generateMockStockData(
   period2: number,
   interval: string
 ) {
+  // Ensure period1 is not after period2
+  if (period1 > period2) {
+    console.log(`Warning: Invalid date range for ${symbol}, swapping dates`);
+    [period1, period2] = [period2, period1];
+  }
+  
+  // Ensure we're not generating data for future dates
+  const now = Math.floor(Date.now() / 1000);
+  if (period2 > now) {
+    period2 = now;
+  }
+  
+  // Ensure the range is realistic
+  if (period2 - period1 < 86400) { // Less than 1 day
+    period1 = period2 - 86400 * 30; // Set to 30 days before period2
+  }
+
   console.log(
     `Generating mock data for ${symbol} from ${new Date(
       period1 * 1000
@@ -492,6 +590,11 @@ function generateMockStockData(
     // Generate timestamps
     let currentTime = startDate.getTime();
     const endTime = endDate.getTime();
+    
+    // Ensure valid time range
+    if (currentTime >= endTime) {
+      currentTime = endTime - (timeStep * 30); // Generate at least 30 data points
+    }
 
     // If the range is very large, limit the number of data points
     const maxPoints = 200;

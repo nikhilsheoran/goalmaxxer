@@ -90,9 +90,20 @@ export default async function InvestmentsPage() {
                   {(asset.type === "stock" || asset.type === "mf") && <StockChartDialog symbol={asset.symbol || ""} name={asset.name} assetType={asset.type} />}
                     <div className="text-right">
                       <p className="font-semibold">{formatCurrency(asset.currentValue || 0)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {asset.quantity} × {formatCurrency(asset.purchasePrice)}
-                      </p>
+                      <div className="flex items-center justify-end gap-2">
+                        <p className="text-sm text-muted-foreground">
+                          {asset.quantity} × {formatCurrency(asset.purchasePrice)}
+                        </p>
+                        {(asset.growthPercentage !== undefined) && (
+                          <p className={`text-sm ${
+                            asset.growthPercentage > 0
+                              ? 'text-green-500'
+                              : 'text-red-500'
+                          }`}>
+                            {asset.growthPercentage > 0 ? '+' : ''}{asset.growthPercentage.toFixed(2)}%
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <AssetActions asset={{
                       id: asset.id,
