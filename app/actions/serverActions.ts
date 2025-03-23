@@ -247,14 +247,20 @@ export async function createGoal(data: OnboardingData & GoalData) {
     const goalKeyword = getGoalKeywordFromId(data.selectedGoal || "");
     const riskLevel = getRiskLevelFromString(data.riskLevel);
 
+    // Calculate target amount for emergency fund
+    let targetAmount = data.cost;
+    if (data.selectedGoal === "emergencyFund" && data.monthlyIncome && data.desiredCoverageMonths) {
+      targetAmount = data.monthlyIncome * data.desiredCoverageMonths;
+    }
+
     const goal = await db.goal.create({
       data: {
         userId,
         name: data.customGoalName || data.name || data.selectedGoal,
         keywords: [goalKeyword],
         currentAmt: data.upfrontAmount || 0,
-        targetAmt: data.cost,
-        targetAmtInflationAdjusted: data.cost * Math.pow(1.06, data.years), // 6% inflation
+        targetAmt: targetAmount,
+        targetAmtInflationAdjusted: targetAmount * Math.pow(1.06, data.years), // 6% inflation
         targetDate: targetDate.toISOString(),
         priority: "high" as GoalPriority,
 
@@ -775,7 +781,7 @@ export async function getInvestmentSuggestions(goalData: GoalData) {
      - 'name' (string): The goal's name (e.g., "House Down Payment").
      - 'target_amount' (number): The amount to achieve (e.g., 50000).
      - 'timeframe_years' (number): Years to reach the goal (e.g., 5).
-     - 'risk_level' (string): User’s risk tolerance ("high", "moderate", "low"), derived from a risk assessment.
+     - 'risk_level' (string): User's risk tolerance ("high", "moderate", "low"), derived from a risk assessment.
    - If any field is missing, assume defaults: 'target_amount = 10000', 'timeframe_years = 5', 'risk_level = "moderate"'.
 
 2. **Stock Data Usage:**
@@ -784,7 +790,7 @@ export async function getInvestmentSuggestions(goalData: GoalData) {
      - Moderate Risk: 0.8 <= Sharpe < 1.6
      - Low Risk: Sharpe >= 1.6
    - Each table lists stocks with 'Ticker' (symbol), 'CAGR' (compound annual growth rate), and 'Sharpe Ratio'.
-   - Select stocks only from the category matching the user’s 'risk_level'.
+   - Select stocks only from the category matching the user's 'risk_level'.
 
 3. **Selection Criteria:**
    - Choose 3-5 stocks from the relevant risk category.
@@ -800,10 +806,10 @@ export async function getInvestmentSuggestions(goalData: GoalData) {
      - 'type': Set as "Stock".
      - 'symbol': Ticker from the table (e.g., "METROBRAND.NS").
      - 'quantity': Calculate based on 'target_amount' / (3-5 stocks) / 'purchasePrice' (round to nearest integer).
-     - 'purchasePrice': Estimate as 1000 INR (default, since actual prices aren’t provided).
-     - 'risk': Match user’s 'risk_level' ("high", "moderate", "low").
+     - 'purchasePrice': Estimate as 1000 INR (default, since actual prices aren't provided).
+     - 'risk': Match user's 'risk_level' ("high", "moderate", "low").
      - 'description': Generate a brief description (e.g., "A high-growth stock in the [inferred sector] sector with [CAGR]% CAGR").
-     - 'expectedReturn': Use the stock’s CAGR from the table as the expected annual return.
+     - 'expectedReturn': Use the stock's CAGR from the table as the expected annual return.
      - 'currency': Set as "INR" (Indian Rupees, based on .NS tickers).
 
 5. **Constraints:**
@@ -859,11 +865,6 @@ DATAPATTNS.NS 29.23%          0.94
 
 === Low Risk (Sharpe >= 1.6) Stocks by CAGR ===
        Ticker   CAGR  Sharpe Ratio
-    KAYNES.NS 77.84%          1.75
-     PTCIL.NS 69.45%          1.66
-      IRFC.NS 56.11%          1.77
-  LLOYDSME.NS 52.68%          2.32
-ANANDRATHI.NS 40.70%          2.74
     ZOMATO.NS 40.18%          1.63
    MAZDOCK.NS 36.47%          2.24
       RVNL.NS 33.62%          1.70
@@ -898,15 +899,10 @@ AJANTPHARM.NS 11.93%          1.52
 
 === Low Risk (Sharpe >= 1.6) Stocks by Sharpe Ratio ===
        Ticker   CAGR  Sharpe Ratio
-ANANDRATHI.NS 40.70%          2.74
-  LLOYDSME.NS 52.68%          2.32
-   MAZDOCK.NS 36.47%          2.24
 KALYANKJIL.NS 19.38%          1.91
-  KFINTECH.NS 30.90%          1.86
-POWERINDIA.NS 31.27%          1.79
+  KFINTECH.NS 16.90%          1.86
+POWERINDIA.NS 18.27%          1.79
  PPLPHARMA.NS 24.61%          1.78
-      IRFC.NS 56.11%          1.77
-    KAYNES.NS 77.84%          1.75
      DIXON.NS 20.88%          1.74
 
 TOP 10 PERFORMING MUTUAL FUNDS:
