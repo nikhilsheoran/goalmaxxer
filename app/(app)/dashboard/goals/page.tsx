@@ -23,6 +23,7 @@ import { formatCurrency } from "@/lib/utils";
 import { AddGoalDialog } from "@/app/components/AddGoalDialog";
 import { ViewGoalDialog } from "@/app/components/ViewGoalDialog";
 import { GoalKeyword, GoalPriority } from "@prisma/client";
+import { GoalActions } from "@/app/components/GoalActions";
 
 // Map of category to icon
 const categoryIcons = {
@@ -111,7 +112,7 @@ export default async function GoalsPage() {
                 key={goal.id}
                 className="hover:shadow-lg transition-all duration-300 group"
               >
-                <CardContent className="pt-6">
+                <CardContent className="px-4 py-2 pt-0">
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="flex items-start gap-4 md:w-1/3">
                       <div className="p-2 bg-primary/10 rounded-full mt-1">
@@ -196,10 +197,27 @@ export default async function GoalsPage() {
                         </div>
                       </div>
 
-                      <div className="flex justify-end">
+                      <div className="flex justify-between items-center">
+                        ffs
                         <ViewGoalDialog goal={{
-                          ...goal,
-                          description: goal.description || undefined
+                          id: goal.id,
+                          name: goal.name,
+                          description: goal.description || "",
+                          currentAmt: goal.currentAmt,
+                          targetAmt: goal.targetAmt,
+                          targetDate: goal.targetDate,
+                          priority: goal.priority,
+                          keywords: goal.keywords,
+                        }} />
+                        <GoalActions goal={{
+                          id: goal.id,
+                          name: goal.name,
+                          description: goal.description || "",
+                          currentAmt: goal.currentAmt,
+                          targetAmt: goal.targetAmt,
+                          targetDate: goal.targetDate,
+                          priority: goal.priority,
+                          keywords: goal.keywords,
                         }} />
                       </div>
 
