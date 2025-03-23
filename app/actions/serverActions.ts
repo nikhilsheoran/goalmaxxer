@@ -595,7 +595,7 @@ export async function createAsset(data: AssetData) {
         });
         break;
       case "etf":
-        await db.etf.create({
+        await db.eTF.create({
           data: {
             assetId: asset.id,
           },
