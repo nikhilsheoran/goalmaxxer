@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 const HeroSection = () => {
   return (
@@ -54,12 +55,14 @@ const HeroSection = () => {
             transition={{ duration: 0.7, delay: 0.5 }}
             className="bg-card rounded-xl shadow-lg border border-border p-2 relative overflow-hidden"
           >
-            <div className="relative rounded-lg overflow-hidden aspect-video bg-gradient-to-tr from-primary/10 to-accent/10 flex items-center justify-center">
-              <div className="absolute inset-0 bg-pattern opacity-5"></div>
-              <div className="text-center p-8">
-                <p className="text-xl font-medium mb-4">Demo Video</p>
-                <p className="text-foreground/70">Watch how GoalMaxxer helps plan and track your financial goals</p>
-              </div>
+            <div className="relative rounded-lg overflow-hidden aspect-video bg-gradient-to-tr from-primary/10 to-accent/10">
+              <Image
+                src="/images/header.png"
+                alt="GoalMaxxer Dashboard Preview"
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
           </motion.div>
         </div>
