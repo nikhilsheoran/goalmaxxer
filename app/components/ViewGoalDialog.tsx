@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Calendar, Target, Home, GraduationCap, BadgePercent, Map, Car, Heart, ShieldAlert, BanknoteIcon, Briefcase, Stethoscope, HandHeart, LandmarkIcon, HelpCircle, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { GoalKeyword } from "@prisma/client";
+import { GoalKeyword, GoalPriority } from "@prisma/client";
 
 interface ViewGoalDialogProps {
   goal: {
@@ -14,9 +14,9 @@ interface ViewGoalDialogProps {
     description?: string;
     currentAmt: number;
     targetAmt: number;
-    targetDate: Date | string;
-    priority: string;
-    keywords?: GoalKeyword[];
+    targetDate: Date;
+    priority: GoalPriority;
+    keywords: GoalKeyword[];
   };
 }
 
