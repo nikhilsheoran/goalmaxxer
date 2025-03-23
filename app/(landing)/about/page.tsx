@@ -8,17 +8,17 @@ const teamMembers = [
     name: "Nikhil Sheoran",
     role: "Full Stack Developer",
     social: {
-      github: "#",
-      linkedin: "#",
-      twitter: "#"
+      github: "https://github.com/nikhilsheoran",
+      linkedin: "https://www.linkedin.com/in/nikhilsheoran/",
+      twitter: "https://x.com/_nikhilsheoran"
     }
   },
   {
     name: "Aashay Naik",
     role: "Full Stack Developer",
     social: {
-      github: "#",
-      linkedin: "#",
+      github: "https://github.com/ash594",
+      linkedin: "https://www.linkedin.com/in/aashay-naik-43554328b/",
       twitter: "#"
     }
   },
@@ -26,8 +26,8 @@ const teamMembers = [
     name: "Utkarsh Misra",
     role: "Full Stack Developer",
     social: {
-      github: "#",
-      linkedin: "#",
+      github: "https://github.com/utkarshmisra0211",
+      linkedin: "https://www.linkedin.com/in/utkarsh-misra-a4b745267/",
       twitter: "#"
     }
   },
@@ -35,17 +35,17 @@ const teamMembers = [
     name: "Mohak Jain",
     role: "Full Stack Developer",
     social: {
-      github: "#",
-      linkedin: "#",
-      twitter: "#"
+      github: "https://github.com/mjain1110",
+      linkedin: "https://www.linkedin.com/in/mohak-jain-3b2b84262/",
+      twitter: "https://x.com/mohakj_"
     }
   },
   {
     name: "Ashit Jain",
     role: "Full Stack Developer",
     social: {
-      github: "#",
-      linkedin: "#",
+      github: "https://github.com/ASHJAIN9374",
+      linkedin: "https://www.linkedin.com/in/ashit-jain-9b7b7324b/",
       twitter: "#"
     }
   },
@@ -54,7 +54,7 @@ const teamMembers = [
     role: "Full Stack Developer",
     social: {
       github: "#",
-      linkedin: "#",
+      linkedin: "https://www.linkedin.com/in/gaurav-singh-835b98256/",
       twitter: "#"
     }
   }
@@ -110,13 +110,64 @@ export default function AboutPage() {
         className="max-w-6xl mx-auto"
       >
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">About GoalMaxxer</h1>
-          <p className="text-lg text-foreground/80 max-w-3xl mx-auto">
-            GoalMaxxer was born at the Dezerv X BITS Goa Hackathon 2025, where Team VibeCoders took on the challenge of revolutionizing goal-based investing. Our mission was simple yet ambitious: to create a platform that makes it effortless to align investments with personal financial goals.
+          <h1 className="text-4xl font-bold mb-6">About GoalMaxxer</h1>
+          <p className="text-lg text-foreground/80 max-w-4xl mx-auto mb-6">
+            GoalMaxxer is a modern goal-based investment platform developed at the Dezerv X BITS Goa Hackathon 2025. Our mission is to revolutionize personal finance by making goal-based investing accessible, intuitive, and effective for everyone.
+          </p>
+          <p className="text-lg text-foreground/80 max-w-4xl mx-auto">
+            Created by Team VibeCoders, our platform combines cutting-edge technology with user-friendly design to help you define, track, and achieve your financial goals with confidence.
           </p>
         </div>
 
-        <div className="mb-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mb-20 bg-card border border-border rounded-xl p-8"
+        >
+          <h2 className="text-2xl font-semibold mb-6 text-center">Our Innovative Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-background p-6 rounded-lg border border-border flex flex-col h-full">
+              <div className="size-12 bg-primary/10 rounded-full mb-4 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="size-6 text-primary" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Personalized Goal Setting</h3>
+              <p className="text-foreground/70 flex-grow">Define and track your financial goals, from retirement to education planning, with personalized recommendations.</p>
+            </div>
+            <div className="bg-background p-6 rounded-lg border border-border flex flex-col h-full">
+              <div className="size-12 bg-primary/10 rounded-full mb-4 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="size-6 text-primary" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path>
+                  <path d="M12 2v2"></path>
+                  <path d="M12 20v2"></path>
+                  <path d="m4.93 4.93 1.41 1.41"></path>
+                  <path d="m17.66 17.66 1.41 1.41"></path>
+                  <path d="M2 12h2"></path>
+                  <path d="M20 12h2"></path>
+                  <path d="m6.34 17.66-1.41 1.41"></path>
+                  <path d="m19.07 4.93-1.41 1.41"></path>
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Smart Investment Recommendations</h3>
+              <p className="text-foreground/70 flex-grow">Get tailored investment suggestions based on your goals, risk tolerance, and time horizon.</p>
+            </div>
+            <div className="bg-background p-6 rounded-lg border border-border flex flex-col h-full">
+              <div className="size-12 bg-primary/10 rounded-full mb-4 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="size-6 text-primary" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Real-time Progress Tracking</h3>
+              <p className="text-foreground/70 flex-grow">Monitor your journey towards financial objectives with interactive dashboards and visual progress indicators.</p>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="mb-20" id="team">
           <h2 className="text-2xl font-semibold mb-8 text-center">Meet Our Team</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {teamMembers.map((member, index) => (
@@ -180,12 +231,80 @@ export default function AboutPage() {
             GoalMaxxer helps you define your financial goals, whether it's saving for retirement, buying a home, or funding education. Our platform provides personalized investment recommendations and real-time tracking to ensure you stay on course to achieve your goals. We combine advanced technology with an intuitive interface to make financial planning accessible and effective.
           </p>
 
-          <div className="bg-primary/5 rounded-xl p-8 border border-primary/10">
-            <h3 className="text-xl font-semibold mb-3">Hackathon Recognition</h3>
-            <p className="text-foreground/80">
-              Created at the Dezerv X BITS Goa Hackathon 2025, where we focused on revolutionizing personal finance through goal-based investing solutions.
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div className="bg-primary/5 rounded-xl p-8 border border-primary/10">
+              <h3 className="text-xl font-semibold mb-3">Tech Stack</h3>
+              <ul className="space-y-2 text-foreground/80">
+                <li className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-primary"></div>
+                  <span><strong>Frontend:</strong> Next.js 15, React 19, TailwindCSS</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-primary"></div>
+                  <span><strong>Authentication:</strong> Clerk for robust user authentication</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-primary"></div>
+                  <span><strong>Animations:</strong> Framer Motion for smooth transitions</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-primary"></div>
+                  <span><strong>Development:</strong> TypeScript, ESLint, Turbopack</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-primary/5 rounded-xl p-8 border border-primary/10">
+              <h3 className="text-xl font-semibold mb-3">Hackathon Recognition</h3>
+              <p className="text-foreground/80 mb-4">
+                Created at the Dezerv X BITS Goa Hackathon 2025, where we focused on revolutionizing personal finance through goal-based investing solutions.
+              </p>
+              <p className="text-foreground/80">
+                Our team is proud to have developed a solution that addresses real financial planning challenges while providing an exceptional user experience.
+              </p>
+            </div>
           </div>
+
+          <div className="bg-card border border-border rounded-xl p-8">
+            <h3 className="text-xl font-semibold mb-3">Looking Forward</h3>
+            <p className="text-foreground/80 mb-4">
+              We're committed to continuously improving GoalMaxxer with new features and enhancements. Our roadmap includes:
+            </p>
+            <ul className="space-y-2 text-foreground/80">
+              <li className="flex items-start gap-2">
+                <div className="size-2 rounded-full bg-primary mt-2"></div>
+                <span>Advanced AI-powered financial forecasting for more accurate goal planning</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="size-2 rounded-full bg-primary mt-2"></div>
+                <span>Expanded investment options to provide more diversified portfolio recommendations</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="size-2 rounded-full bg-primary mt-2"></div>
+                <span>Enhanced mobile experience with native app development</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="size-2 rounded-full bg-primary mt-2"></div>
+                <span>Integration with additional financial institutions for seamless account management</span>
+              </li>
+            </ul>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mt-20 text-center"
+        >
+          <h2 className="text-2xl font-semibold mb-6">Get Started Today</h2>
+          <p className="text-lg text-foreground/80 mb-8 max-w-3xl mx-auto">
+            Ready to take control of your financial future? Sign up for GoalMaxxer today and start your journey toward achieving your financial goals with confidence.
+          </p>
+          <a href="/sign-up" className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-lg font-medium text-white hover:bg-primary/90 transition-colors">
+            Start Your Financial Journey
+          </a>
         </motion.div>
       </motion.div>
     </div>
