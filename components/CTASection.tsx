@@ -87,7 +87,7 @@ const CTASection = () => {
                   className="px-8 bg-transparent border-white/30 text-white hover:text-zinc-100 hover:bg-white/10 hover:border-white transition-all duration-300"
                   asChild
                 >
-                  <Link href="/contact">Schedule a Demo</Link>
+                  <Link href="/about#team">Schedule a Demo</Link>
                 </Button>
               </motion.div>
             </motion.div>
