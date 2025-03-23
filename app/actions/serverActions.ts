@@ -95,7 +95,6 @@ export async function getDashboardData() {
       orderBy: {
         purchaseDate: "desc",
       },
-      take: 5,
       select: {
         id: true,
         name: true,
