@@ -87,6 +87,7 @@ export default async function InvestmentsPage() {
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
+                  {(asset.type === "stock" || asset.type === "mf") && <StockChartDialog symbol={asset.symbol || ""} name={asset.name} assetType={asset.type} />}
                     <div className="text-right">
                       <p className="font-semibold">{formatCurrency(asset.currentValue || 0)}</p>
                       <p className="text-sm text-muted-foreground">

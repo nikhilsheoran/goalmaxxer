@@ -337,7 +337,7 @@ export function StockChartDialog({ symbol, name, assetType }: StockChartDialogPr
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="mt-4">
-          <BarChart2 className="h-4 w-4 mr-2" /> View Price History
+          <BarChart2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] data-[state=open]:!animate-in data-[state=open]:!fade-in-0 data-[state=open]:!zoom-in-95">
