@@ -4,6 +4,8 @@ import { getDashboardData } from "@/app/actions/serverActions";
 import { formatCurrency } from "@/lib/utils";
 import { StockChartDialog } from "@/app/components/StockChartDialog";
 import { AddInvestmentDialog } from "@/app/components/AddInvestmentDialog";
+import { AssetActions } from "@/app/components/AssetActions";
+import { cn } from "@/lib/utils";
 
 const getAssetTypeIcon = (type: string) => {
   switch (type.toLowerCase()) {
@@ -11,6 +13,8 @@ const getAssetTypeIcon = (type: string) => {
       return <TrendingUp className="h-5 w-5" />;
     case 'mf':
       return <ArrowUpRight className="h-5 w-5" />;
+    case 'etf':
+      return <TrendingUp className="h-5 w-5" />;
     default:
       return <Wallet className="h-5 w-5" />;
   }
@@ -35,95 +39,73 @@ export default async function InvestmentsPage() {
         <AddInvestmentDialog />
       </div>
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-3">
         {sortedAssets.length > 0 ? (
           sortedAssets.map((asset) => (
-            <Card key={asset.id} className="hover:shadow-lg transition-all duration-300 group">
-              <CardContent className="pt-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                  <div className="flex items-start gap-4 md:w-1/3">
-                    <div className="p-2 bg-primary/10 rounded-full mt-1">
-                      {getAssetTypeIcon(asset.type)}
+            <Card key={asset.id} className="hover:shadow-lg transition-all duration-300">
+              <CardContent className="px-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4">
+                    <div className={cn(
+                      "p-2 rounded-lg",
+                      asset.risk === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                      asset.risk === "moderate" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    )}>
+                      {asset.type === "stock" ? (
+                        <TrendingUp className="h-5 w-5" />
+                      ) : asset.type === "mf" ? (
+                        <ArrowUpRight className="h-5 w-5" />
+                      ) : asset.type === "etf" ? (
+                        <TrendingUp className="h-5 w-5" />
+                      ) : (
+                        <Wallet className="h-5 w-5" />
+                      )}
                     </div>
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                    <div>
+                      <h3 className="font-semibold">
                         {asset.name}
                         {asset.symbol && (
-                          <span className="text-sm text-muted-foreground ml-2">({asset.symbol})</span>
+                          <span className="text-sm text-muted-foreground ml-1">
+                            ({asset.symbol})
+                          </span>
                         )}
                       </h3>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground capitalize">
-                          {asset.type.toLowerCase().replace('_', ' ')}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className={cn(
+                          "text-xs px-2 py-0.5 rounded-full font-medium",
+                          asset.risk === "high" ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400" :
+                          asset.risk === "moderate" ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                          "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                        )}>
+                          {asset.risk || "moderate"} risk
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {asset.type.toUpperCase()}
                         </span>
                       </div>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                        asset.risk?.toUpperCase() === 'HIGH' 
-                          ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' 
-                          : asset.risk?.toUpperCase() === 'MODERATE' 
-                            ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
-                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                      }`}>
-                        {asset.risk?.toLowerCase() || 'unknown'} risk
-                      </span>
                     </div>
                   </div>
-
-                  <div className="flex-1">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Current Value</p>
-                        <p className="text-2xl font-semibold tracking-tight">
-                          {formatCurrency(asset.currentValue || 0)}
-                        </p>
-                        {asset.currentValue && asset.purchasePrice && (
-                          <div className="flex items-center gap-2">
-                            {((asset.currentValue - asset.purchasePrice) / asset.purchasePrice) > 0 ? (
-                              <>
-                                <ArrowUpRight className="h-4 w-4 text-green-500" />
-                                <span className="text-sm font-medium text-green-500">
-                                  +{((asset.currentValue - asset.purchasePrice) / asset.purchasePrice * 100).toFixed(2)}%
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <ArrowDownRight className="h-4 w-4 text-red-500" />
-                                <span className="text-sm font-medium text-red-500">
-                                  {((asset.currentValue - asset.purchasePrice) / asset.purchasePrice * 100).toFixed(2)}%
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Purchase Price</p>
-                        <p className="text-2xl font-semibold tracking-tight">
-                          {formatCurrency(asset.purchasePrice || 0)}
-                        </p>
-                        {asset.currentValue && asset.purchasePrice && (
-                          <p className="text-sm text-muted-foreground">
-                            {formatCurrency(Math.abs(asset.currentValue - asset.purchasePrice))} {asset.currentValue > asset.purchasePrice ? 'profit' : 'loss'}
-                          </p>
-                        )}
-                      </div>
+                  <div className="flex items-start gap-4">
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(asset.currentValue || 0)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {asset.quantity} × {formatCurrency(asset.purchasePrice)}
+                      </p>
                     </div>
-                    
-                    {/* Add the Stock Chart Visualization */}
-                    {asset.symbol && (
-                      <div className="mt-4 flex justify-end">
-                        {/* Only show chart button for stocks and mutual funds */}
-                        {['stock', 'mf'].includes(asset.type.toLowerCase()) && (
-                          <StockChartDialog 
-                            symbol={asset.symbol} 
-                            name={asset.name} 
-                            assetType={asset.type.toLowerCase().replace('_', ' ')} 
-                          />
-                        )}
-                      </div>
-                    )}
+                    <AssetActions asset={{
+                      id: asset.id,
+                      name: asset.name,
+                      type: asset.type,
+                      symbol: asset.symbol || undefined,
+                      quantity: asset.quantity,
+                      purchasePrice: asset.purchasePrice,
+                      purchaseDate: new Date(asset.purchaseDate),
+                      risk: asset.risk || undefined,
+                      currency: asset.currency || "INR",
+                      goalId: asset.goalId || undefined,
+                      currentValue: asset.currentValue || undefined,
+                    }} />
                   </div>
                 </div>
               </CardContent>

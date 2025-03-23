@@ -95,15 +95,18 @@ export async function getDashboardData() {
       orderBy: {
         purchaseDate: "desc",
       },
-      take: 5,
       select: {
         id: true,
         name: true,
         type: true,
         currentValue: true,
         purchasePrice: true,
+        purchaseDate: true,
+        quantity: true,
         symbol: true,
         risk: true,
+        currency: true,
+        goalId: true,
       },
     });
 
@@ -120,7 +123,7 @@ export async function getDashboardData() {
   }
 }
 
-interface OnboardingData extends GoalData {
+export interface OnboardingData extends GoalData {
   dateOfBirth: Date;
   selectedGoal: string;
   [key: string]: any;
@@ -128,48 +131,34 @@ interface OnboardingData extends GoalData {
 
 export interface GoalData {
   name?: string;
+  description?: string;
   cost: number;
   years: number;
   upfrontAmount?: number;
   selectedGoal?: string;
   priority?: "high" | "medium" | "low";
-
-  // Home specific fields
+  riskLevel?: "High" | "Medium" | "Low";
   takingLoan?: "yes" | "no";
   downPaymentPercentage?: number;
-  riskLevel?: "High" | "Medium" | "Low";
-
-  // Retirement specific fields
   monthlyExpenses?: number;
   retirementAge?: number;
-
-  // Wedding specific fields
   guestCount?: number;
   includeHoneymoon?: "yes" | "no";
-
-  // Emergency Fund specific fields
   monthlyIncome?: number;
   desiredCoverageMonths?: number;
-
-  // Business specific fields
   businessType?: string;
   employeeCount?: number;
-
-  // Health specific fields
   insuranceCoverage?: number;
   familySize?: number;
-
-  // Charity specific fields
   donationType?: "one_time" | "recurring";
   recurringAmount?: number;
-
-  // Debt Repayment specific fields
   debtType?: "credit_card" | "personal_loan" | "student_loan" | "other";
   interestRate?: number;
   minimumPayment?: number;
-
-  // Custom goal fields
   customGoalName?: string;
+  priority?: GoalPriority;
+  targetDate?: Date;
+  selectedGoal?: string;
 }
 
 const getGoalKeywordFromId = (goalId: string): GoalKeyword => {
@@ -248,14 +237,20 @@ export async function createGoal(data: OnboardingData & GoalData) {
     const goalKeyword = getGoalKeywordFromId(data.selectedGoal || "");
     const riskLevel = getRiskLevelFromString(data.riskLevel);
 
+    // Calculate target amount for emergency fund
+    let targetAmount = data.cost;
+    if (data.selectedGoal === "emergencyFund" && data.monthlyIncome && data.desiredCoverageMonths) {
+      targetAmount = data.monthlyIncome * data.desiredCoverageMonths;
+    }
+
     const goal = await db.goal.create({
       data: {
         userId,
         name: data.customGoalName || data.name || data.selectedGoal,
         keywords: [goalKeyword],
         currentAmt: data.upfrontAmount || 0,
-        targetAmt: data.cost,
-        targetAmtInflationAdjusted: data.cost * Math.pow(1.06, data.years), // 6% inflation
+        targetAmt: targetAmount,
+        targetAmtInflationAdjusted: targetAmount * Math.pow(1.06, data.years), // 6% inflation
         targetDate: targetDate.toISOString(),
         priority: (data.priority || "high") as GoalPriority,
 
@@ -860,11 +855,6 @@ DATAPATTNS.NS 29.23%          0.94
 
 === Low Risk (Sharpe >= 1.6) Stocks by CAGR ===
        Ticker   CAGR  Sharpe Ratio
-    KAYNES.NS 77.84%          1.75
-     PTCIL.NS 69.45%          1.66
-      IRFC.NS 56.11%          1.77
-  LLOYDSME.NS 52.68%          2.32
-ANANDRATHI.NS 40.70%          2.74
     ZOMATO.NS 40.18%          1.63
    MAZDOCK.NS 36.47%          2.24
       RVNL.NS 33.62%          1.70
@@ -899,15 +889,10 @@ AJANTPHARM.NS 11.93%          1.52
 
 === Low Risk (Sharpe >= 1.6) Stocks by Sharpe Ratio ===
        Ticker   CAGR  Sharpe Ratio
-ANANDRATHI.NS 40.70%          2.74
-  LLOYDSME.NS 52.68%          2.32
-   MAZDOCK.NS 36.47%          2.24
 KALYANKJIL.NS 19.38%          1.91
-  KFINTECH.NS 30.90%          1.86
-POWERINDIA.NS 31.27%          1.79
+  KFINTECH.NS 16.90%          1.86
+POWERINDIA.NS 18.27%          1.79
  PPLPHARMA.NS 24.61%          1.78
-      IRFC.NS 56.11%          1.77
-    KAYNES.NS 77.84%          1.75
      DIXON.NS 20.88%          1.74
 
 TOP 10 PERFORMING MUTUAL FUNDS:
@@ -947,5 +932,302 @@ Scheme Name  CAGR (%)  Sharpe Ratio  Volatility (%)
   } catch (error) {
     console.error("Error getting investment suggestions:", error);
     throw new Error("Failed to get investment suggestions");
+  }
+}
+
+// Search assets by name or symbol
+export async function searchAssets(query: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const assets = await db.asset.findMany({
+      where: {
+        userId,
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { symbol: { contains: query, mode: 'insensitive' } }
+        ]
+      },
+      include: {
+        goal: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    return { assets };
+  } catch (error) {
+    console.error("Error searching assets:", error);
+    throw new Error("Failed to search assets");
+  }
+}
+
+// Delete an asset
+export async function deleteAsset(assetId: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    // Get the asset to check ownership and get goal info
+    const asset = await db.asset.findFirst({
+      where: {
+        id: assetId,
+        userId
+      },
+      include: {
+        goal: true
+      }
+    });
+
+    if (!asset) {
+      throw new Error("Asset not found or unauthorized");
+    }
+
+    // If asset is linked to a goal, update goal's currentAmt
+    if (asset.goalId) {
+      await db.goal.update({
+        where: { id: asset.goalId },
+        data: {
+          currentAmt: {
+            decrement: asset.currentValue || 0
+          }
+        }
+      });
+    }
+
+    // Delete the asset
+    await db.asset.delete({
+      where: { id: assetId }
+    });
+
+    revalidatePath("/dashboard/investments");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting asset:", error);
+    throw new Error("Failed to delete asset");
+  }
+}
+
+// Update an asset
+export async function updateAsset(assetId: string, data: Partial<AssetData>) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    // Get current asset to check ownership
+    const currentAsset = await db.asset.findFirst({
+      where: {
+        id: assetId,
+        userId
+      }
+    });
+
+    if (!currentAsset) {
+      throw new Error("Asset not found or unauthorized");
+    }
+
+    // Update the asset
+    const updatedAsset = await db.asset.update({
+      where: { id: assetId },
+      data: {
+        name: data.name,
+        symbol: data.symbol,
+        quantity: data.quantity,
+        purchasePrice: data.purchasePrice,
+        purchaseDate: data.purchaseDate,
+        risk: data.risk,
+        currency: data.currency,
+        currentValue: data.quantity ? data.quantity * (data.purchasePrice || currentAsset.purchasePrice) : currentAsset.currentValue,
+        goalId: data.goalId
+      }
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/investments");
+    return { success: true, asset: updatedAsset };
+  } catch (error) {
+    console.error("Error updating asset:", error);
+    throw new Error("Failed to update asset");
+  }
+}
+
+// Search goals by name or keyword
+export async function searchGoals(query: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    const goals = await db.goal.findMany({
+      where: {
+        userId,
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { keywords: { hasSome: [query as GoalKeyword] } }
+        ]
+      },
+      include: {
+        assets: {
+          select: {
+            id: true,
+            name: true,
+            currentValue: true
+          }
+        }
+      }
+    });
+
+    return { goals };
+  } catch (error) {
+    console.error("Error searching goals:", error);
+    throw new Error("Failed to search goals");
+  }
+}
+
+// Delete a goal
+export async function deleteGoal(goalId: string) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    // Get the goal to check ownership
+    const goal = await db.goal.findFirst({
+      where: {
+        id: goalId,
+        userId
+      }
+    });
+
+    if (!goal) {
+      throw new Error("Goal not found or unauthorized");
+    }
+
+    // Delete the goal (this will also update related assets)
+    await db.goal.delete({
+      where: { id: goalId }
+    });
+
+    revalidatePath("/dashboard/goals");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting goal:", error);
+    throw new Error("Failed to delete goal");
+  }
+}
+
+// Update a goal
+export async function updateGoal(goalId: string, data: Partial<GoalData>) {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    // Get current goal to check ownership
+    const currentGoal = await db.goal.findFirst({
+      where: {
+        id: goalId,
+        userId
+      }
+    });
+
+    if (!currentGoal) {
+      throw new Error("Goal not found or unauthorized");
+    }
+
+    // Calculate new target date if years is provided
+    let targetDate = currentGoal.targetDate;
+    if (data.years) {
+      targetDate = new Date();
+      targetDate.setFullYear(targetDate.getFullYear() + data.years);
+    }
+
+    // Update the goal
+    const updatedGoal = await db.goal.update({
+      where: { id: goalId },
+      data: {
+        name: data.name,
+        targetAmt: data.cost,
+        targetAmtInflationAdjusted: data.cost ? data.cost * Math.pow(1.06, data.years || 1) : undefined,
+        targetDate: targetDate,
+        currentAmt: data.upfrontAmount,
+        // Update other fields as needed
+        monthlyExpenses: data.monthlyExpenses,
+        retirementAge: data.retirementAge,
+        guestCount: data.guestCount,
+        includeHoneymoon: data.includeHoneymoon === "yes",
+        monthlyIncome: data.monthlyIncome,
+        desiredCoverageMonths: data.desiredCoverageMonths,
+        businessType: data.businessType,
+        employeeCount: data.employeeCount,
+        insuranceCoverage: data.insuranceCoverage,
+        familySize: data.familySize,
+        donationType: data.donationType,
+        recurringAmount: data.recurringAmount,
+        debtType: data.debtType,
+        interestRate: data.interestRate,
+        minimumPayment: data.minimumPayment,
+        customGoalName: data.customGoalName
+      }
+    });
+
+    revalidatePath("/dashboard/goals");
+    return { goal: updatedGoal };
+  } catch (error) {
+    console.error("Error updating goal:", error);
+    throw new Error("Failed to update goal");
+  }
+}
+
+// Get portfolio analysis
+export async function getPortfolioAnalysis() {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
+
+  try {
+    // Get all assets with their performance data
+    const assets = await db.asset.findMany({
+      where: { userId },
+      include: {
+        performance: {
+          orderBy: {
+            assetId: 'asc'
+          }
+        }
+      }
+    });
+
+    // Calculate total portfolio value
+    const totalValue = assets.reduce((sum, asset) => sum + (asset.currentValue || 0), 0);
+
+    // Calculate asset allocation
+    const allocation = assets.reduce((acc, asset) => {
+      const type = asset.type;
+      acc[type] = (acc[type] || 0) + (asset.currentValue || 0);
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Convert allocation to percentages
+    const allocationPercentages = Object.entries(allocation).map(([type, value]) => ({
+      type,
+      percentage: (value / totalValue) * 100
+    }));
+
+    // Calculate risk metrics
+    const riskMetrics = {
+      high: assets.filter(a => a.risk === 'high').length,
+      moderate: assets.filter(a => a.risk === 'moderate').length,
+      low: assets.filter(a => a.risk === 'low').length
+    };
+
+    return {
+      totalValue,
+      allocationPercentages,
+      riskMetrics
+    };
+  } catch (error) {
+    console.error("Error getting portfolio analysis:", error);
+    throw new Error("Failed to get portfolio analysis");
   }
 }
