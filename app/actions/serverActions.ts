@@ -63,7 +63,6 @@ export async function getDashboardData() {
       orderBy: {
         targetDate: "asc",
       },
-      take: 5,
       select: {
         id: true,
         name: true,

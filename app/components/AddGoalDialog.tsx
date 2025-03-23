@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -69,6 +69,44 @@ export function AddGoalDialog({
   const selectedGoal = GOALS.find((goal) => goal.id === goalData.selectedGoal);
   const currentQuestion = selectedGoal?.questions[currentGoalStep];
 
+  useEffect(() => {
+    if (step === "goal-specific" && currentQuestion) {
+      const shouldShow = currentQuestion.showWhen?.(goalData) ?? true;
+      if (!shouldShow) {
+        skipToNextQuestion();
+      }
+    }
+  }, [currentQuestion, goalData, step]);
+
+  const skipToNextQuestion = () => {
+    if (selectedGoal && currentGoalStep < selectedGoal.questions.length - 1) {
+      setCurrentGoalStep(currentGoalStep + 1);
+    } else {
+      submitGoal();
+    }
+  };
+
+  const submitGoal = async () => {
+    try {
+      if (!goalData.selectedGoal) throw new Error("Missing required data");
+      
+      await createGoal({
+        dateOfBirth: goalData.dateOfBirth || new Date(),
+        selectedGoal: goalData.selectedGoal,
+        cost: goalData.cost || 0,
+        years: goalData.years || 0,
+        upfrontAmount: goalData.upfrontAmount || 0,
+        ...goalData,
+      });
+
+      setOpen(false);
+      toast.success("Goal created");
+      onSuccess?.();
+    } catch (error: any) {
+      toast.error("Error creating goal", { description: error.message });
+    }
+  };
+
   const validateCurrentStep = () => {
     setError("");
     if (!currentQuestion) return true;
@@ -128,51 +166,20 @@ export function AddGoalDialog({
 
   const handleNext = async () => {
     setIsLoading(true);
-    switch (step) {
-      case "goal-selection":
-        if (goalData.selectedGoal) {
-          setStep("goal-specific");
+    if (step === "goal-selection") {
+      if (goalData.selectedGoal) {
+        setStep("goal-specific");
+      } else {
+        setError("Please select a goal");
+      }
+    } else if (step === "goal-specific") {
+      if (validateCurrentStep()) {
+        if (selectedGoal && currentGoalStep < selectedGoal.questions.length - 1) {
+          setCurrentGoalStep(currentGoalStep + 1);
         } else {
-          setError("Please select a goal");
+          await submitGoal();
         }
-        break;
-      case "goal-specific":
-        if (validateCurrentStep()) {
-          if (
-            selectedGoal &&
-            currentGoalStep < selectedGoal.questions.length - 1
-          ) {
-            setCurrentGoalStep(currentGoalStep + 1);
-          } else {
-            try {
-              if (!goalData.selectedGoal) {
-                throw new Error("Missing required data");
-              }
-
-              await createGoal({
-                dateOfBirth: goalData.dateOfBirth || new Date(),
-                selectedGoal: goalData.selectedGoal,
-                cost: goalData.cost || 0,
-                years: goalData.years || 0,
-                upfrontAmount: goalData.upfrontAmount || 0,
-                ...goalData,
-              });
-
-              setOpen(false);
-              toast.success("Goal created", {
-                description:
-                  "Your financial goal has been created successfully.",
-              });
-              onSuccess?.();
-            } catch (error: any) {
-              console.error("Error creating goal:", error);
-              toast.error("Error creating goal", {
-                description: error.message,
-              });
-            }
-          }
-        }
-        break;
+      }
     }
     setIsLoading(false);
   };
@@ -333,12 +340,6 @@ export function AddGoalDialog({
     if (!currentQuestion) return null;
 
     const showInfo = currentQuestion.calculateInfo?.(goalData);
-    const shouldShow = currentQuestion.showWhen?.(goalData) ?? true;
-
-    if (!shouldShow) {
-      handleNext();
-      return null;
-    }
 
     return (
       <div className="space-y-6">
