@@ -106,6 +106,21 @@ const COMMON_GOAL_QUESTIONS: Question[] = [
       step:10000,
       errorMessage: 'Please enter a valid amount',
     }
+  },
+  {
+    id: 'priority',
+    type: 'radio',
+    title: 'Goal Priority',
+    description: 'How important is this goal to you?',
+    options: [
+      { value: 'high', label: 'High Priority' },
+      { value: 'medium', label: 'Medium Priority' },
+      { value: 'low', label: 'Low Priority' }
+    ],
+    validation: {
+      required: true,
+      errorMessage: 'Please select a priority level',
+    }
   }
 ];
 

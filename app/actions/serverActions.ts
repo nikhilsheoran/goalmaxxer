@@ -135,6 +135,8 @@ export interface GoalData {
   cost: number;
   years: number;
   upfrontAmount?: number;
+  selectedGoal?: string;
+  priority?: "high" | "medium" | "low";
   riskLevel?: "High" | "Medium" | "Low";
   takingLoan?: "yes" | "no";
   downPaymentPercentage?: number;
@@ -250,7 +252,7 @@ export async function createGoal(data: OnboardingData & GoalData) {
         targetAmt: targetAmount,
         targetAmtInflationAdjusted: targetAmount * Math.pow(1.06, data.years), // 6% inflation
         targetDate: targetDate.toISOString(),
-        priority: "high" as GoalPriority,
+        priority: (data.priority || "high") as GoalPriority,
 
         // Home specific fields
         isHomeLoan: data.takingLoan === "yes",

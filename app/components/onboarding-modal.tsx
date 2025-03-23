@@ -7,12 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { COMMON_QUESTIONS, GOALS, Question, Goal } from "@/app/lib/config";
+import { COMMON_QUESTIONS, GOALS, Question, Goal, INFLATION_RATE } from "@/app/lib/config";
 import { cn } from "@/lib/utils";
 import DatePicker from "@/components/ui/date-picker";
-import { completeOnboarding } from "@/app/actions/serverActions";
+import { completeOnboarding, createGoal, GoalData } from "@/app/actions/serverActions";
 import { toast } from "sonner";
 import { DialogTitle } from "@radix-ui/react-dialog";
+import { InvestmentSuggestions } from "./InvestmentSuggestions";
+
+// Define the types to match InvestmentSuggestions component
+type AssetType = "stock" | "mf" | "etf" | "fd";
+type RiskLevel = "high" | "moderate" | "low";
+type GoalPriority = "high" | "medium" | "low";
 
 interface UserData {
   dateOfBirth?: Date;
@@ -20,10 +26,32 @@ interface UserData {
   cost?: number;
   years?: number;
   upfrontAmount?: number;
+  monthlyExpenses?: number;
+  retirementAge?: number;
+  priority?: GoalPriority;
   [key: string]: any;
 }
 
-type Step = 'common' | 'goal-selection' | 'goal-specific';
+interface SuggestedInvestment {
+  name: string;
+  type: AssetType;
+  symbol?: string;
+  quantity: number;
+  purchasePrice: number;
+  risk: RiskLevel;
+  description: string;
+  expectedReturn: number;
+  currency: string;
+}
+
+type Step = 'common' | 'goal-selection' | 'goal-specific' | 'investment-suggestions';
+
+// Average life expectancy in India is ~70 years
+const LIFE_EXPECTANCY = 85;
+// Average inflation rate for retirement planning
+const RETIREMENT_INFLATION = 0.06; // 6%
+// Estimated return on investment during retirement (conservative)
+const RETIREMENT_RETURN = 0.05; // 5%
 
 export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDone?:boolean}) {
   const [open, setOpen] = useState(!isOnBoardingDone);
@@ -32,9 +60,49 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
   const [error, setError] = useState<string>("");
   const [userData, setUserData] = useState<UserData>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+
+  // Function to handle dialog open state changes
+  const handleOpenChange = (newOpenState: boolean) => {
+    // Only allow closing if onboarding is already done or has been completed
+    if (isOnBoardingDone || onboardingCompleted) {
+      setOpen(newOpenState);
+    } else {
+      // Keep it open if onboarding is not done
+      setOpen(true);
+    }
+  };
 
   const selectedGoal = GOALS.find(goal => goal.id === userData.selectedGoal);
   const currentQuestion = selectedGoal?.questions[currentGoalStep];
+  
+  // Calculate retirement corpus based on monthly expenses and retirement age
+  const calculateRetirementCorpus = () => {
+    if (!userData.monthlyExpenses || !userData.retirementAge || !userData.dateOfBirth) return 0;
+    
+    // Calculate years until retirement
+    const today = new Date();
+    const birthDate = new Date(userData.dateOfBirth);
+    const currentAge = today.getFullYear() - birthDate.getFullYear();
+    const yearsUntilRetirement = userData.retirementAge - currentAge;
+    
+    // Calculate retirement duration (life expectancy - retirement age)
+    const retirementDuration = LIFE_EXPECTANCY - userData.retirementAge;
+    
+    // Calculate future monthly expenses at retirement age
+    const futureMonthlyExpenses = userData.monthlyExpenses * Math.pow(1 + RETIREMENT_INFLATION, yearsUntilRetirement);
+    
+    // Calculate annual expenses in retirement
+    const annualExpensesInRetirement = futureMonthlyExpenses * 12;
+    
+    // Calculate corpus needed using the formula: Corpus = Annual Expenses * [(1 - (1 + r)^-n) / r]
+    // where r is the expected return rate and n is the number of years in retirement
+    const r = RETIREMENT_RETURN;
+    const n = retirementDuration;
+    const corpus = annualExpensesInRetirement * ((1 - Math.pow(1 + r, -n)) / r);
+    
+    return Math.round(corpus);
+  };
 
   const validateCommonQuestions = () => {
     setError("");
@@ -109,6 +177,89 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
     return true;
   };
 
+  const moveToInvestmentSuggestions = async () => {
+    try {
+      if (!userData.dateOfBirth || !userData.selectedGoal) {
+        throw new Error("Missing required data");
+      }
+      
+      // For retirement, calculate the target amount based on monthly expenses
+      let costValue = userData.cost || 0;
+      if (userData.selectedGoal === 'retireEasy') {
+        costValue = calculateRetirementCorpus();
+        // Update the userData with the calculated cost
+        setUserData(prevData => ({
+          ...prevData,
+          cost: costValue
+        }));
+      }
+
+      // Ensure priority is set with a default if not selected
+      if (!userData.priority) {
+        setUserData(prevData => ({
+          ...prevData,
+          priority: "medium" as GoalPriority
+        }));
+      }
+
+      // Complete the onboarding without waiting for investment selection
+      await completeOnboarding({
+        dateOfBirth: userData.dateOfBirth,
+        selectedGoal: userData.selectedGoal,
+        cost: costValue,
+        years: userData.years || 0,
+        upfrontAmount: userData.upfrontAmount || 0,
+        priority: userData.priority || "medium" as GoalPriority,
+        ...userData
+      });
+      
+      setOnboardingCompleted(true);
+      setStep('investment-suggestions');
+    } catch (error) {
+      console.error("Error during onboarding:", error);
+      toast.error("Failed to complete onboarding. Please try again.");
+    }
+  };
+
+  const handleCreateGoalWithInvestments = async (investments: SuggestedInvestment[] | null) => {
+    setIsLoading(true);
+    try {
+      if (!userData.dateOfBirth || !userData.selectedGoal) {
+        throw new Error("Missing required data");
+      }
+      
+      // For retirement, ensure the target amount is calculated based on monthly expenses
+      let costValue = userData.cost || 0;
+      if (userData.selectedGoal === 'retireEasy' && userData.monthlyExpenses) {
+        costValue = calculateRetirementCorpus();
+      }
+
+      // Ensure priority is set
+      const priority = userData.priority || "medium" as GoalPriority;
+
+      // Create the goal with the selected investments
+      await createGoal({
+        name: selectedGoal?.name || "Custom Goal",
+        selectedGoal: userData.selectedGoal,
+        cost: costValue,
+        years: userData.years || 0,
+        upfrontAmount: userData.upfrontAmount || 0,
+        dateOfBirth: userData.dateOfBirth,
+        priority: priority,
+        // Pass investments through a custom property since it's handled separately in the serverAction
+        ...(investments ? { investments } : {})
+      });
+      
+      toast.success("Goal created successfully with investments!");
+      setOpen(false);
+    } catch (error) {
+      console.error("Error creating goal with investments:", error);
+      toast.error("Failed to create goal with investments. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleNext = async () => {
     setIsLoading(true);
     switch (step) {
@@ -129,26 +280,8 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
           if (selectedGoal && currentGoalStep < selectedGoal.questions.length - 1) {
             setCurrentGoalStep(currentGoalStep + 1);
           } else {
-            try {
-              if (!userData.dateOfBirth || !userData.selectedGoal) {
-                throw new Error("Missing required data");
-              }
-
-              await completeOnboarding({
-                dateOfBirth: userData.dateOfBirth,
-                selectedGoal: userData.selectedGoal,
-                cost: userData.cost || 0,
-                years: userData.years || 0,
-                upfrontAmount: userData.upfrontAmount || 0,
-                ...userData
-              });
-              
-              toast.success("Onboarding completed successfully!");
-              setOpen(false);
-            } catch (error) {
-              console.error("Error during onboarding:", error);
-              toast.error("Failed to complete onboarding. Please try again.");
-            }
+            // Move to investment suggestions instead of completing onboarding here
+            await moveToInvestmentSuggestions();
           }
         }
         break;
@@ -167,6 +300,9 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
         } else {
           setStep('goal-selection');
         }
+        break;
+      case 'investment-suggestions':
+        setStep('goal-specific');
         break;
     }
     setError("");
@@ -213,6 +349,11 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
               }}
               autoFocus
             />
+            {userData.selectedGoal === 'retireEasy' && question.id === 'monthlyExpenses' && userData.monthlyExpenses && userData.retirementAge && userData.dateOfBirth && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                <p className="font-medium">Estimated retirement corpus needed: {calculateRetirementCorpus().toLocaleString('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })}</p>
+              </div>
+            )}
           </div>
         )
       case 'date':
@@ -346,14 +487,52 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
         return renderGoalSelection();
       case 'goal-specific':
         return renderGoalSpecificQuestions();
+      case 'investment-suggestions':
+        return (
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight mb-4">Recommended Investments</h2>
+            <InvestmentSuggestions 
+              goalData={{
+                name: selectedGoal?.name || "Custom Goal",
+                selectedGoal: userData.selectedGoal,
+                cost: userData.cost || 0,
+                years: userData.years || 0,
+                upfrontAmount: userData.upfrontAmount || 0,
+                priority: userData.priority || "medium" as GoalPriority,
+              }}
+              onSkip={() => handleCreateGoalWithInvestments(null)}
+              onInvestmentSelect={(investments) => handleCreateGoalWithInvestments(investments)}
+              isLoading={isLoading}
+            />
+          </div>
+        );
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTitle>
-      </DialogTitle>
-      <DialogContent className="max-w-[600px] p-0 gap-0 overflow-hidden border-none">
+    <Dialog 
+      open={open} 
+      onOpenChange={handleOpenChange}
+    >
+      <DialogContent 
+        className={cn(
+          "max-w-[600px] p-0 gap-0 overflow-hidden border-none",
+          step === 'investment-suggestions' && "sm:max-w-[700px]"
+        )}
+        hideCloseButton={!isOnBoardingDone && !onboardingCompleted}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing with Escape key if onboarding is not done
+          if (!isOnBoardingDone && !onboardingCompleted) {
+            e.preventDefault();
+          }
+        }}
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking outside if onboarding is not done
+          if (!isOnBoardingDone && !onboardingCompleted) {
+            e.preventDefault();
+          }
+        }}
+      >
         {/* Progress bar */}
         {step === 'goal-specific' && selectedGoal && (
           <div className="h-1 bg-secondary w-full">
@@ -368,7 +547,10 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
 
         <div className="p-8 space-y-8">
           {/* Main content */}
-          <div className="min-h-[400px] flex flex-col">
+          <div className={cn(
+            "min-h-[400px] flex flex-col",
+            step === 'investment-suggestions' && "min-h-[450px]"
+          )}>
             {renderContent()}
           </div>
 
@@ -377,27 +559,29 @@ export default function OnboardingModal({isOnBoardingDone=false}:{isOnBoardingDo
             <p className="text-destructive text-sm">{error}</p>
           )}
 
-          {/* Navigation buttons */}
-          <div className="flex justify-between pt-4 border-t">
-            {step !== 'common' ? (
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
+          {/* Navigation buttons - Don't show in investment suggestions step as that has its own buttons */}
+          {step !== 'investment-suggestions' && (
+            <div className="flex justify-between pt-4 border-t">
+              {step !== 'common' ? (
+                <Button
+                  variant="ghost"
+                  onClick={handleBack}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </Button>
+              ) : (
+                <div />
+              )}
+              <Button onClick={handleNext} disabled={isLoading} className="flex items-center gap-2">
+                {step === 'goal-specific' && selectedGoal && currentGoalStep === selectedGoal.questions.length - 1 
+                  ? "Continue to Investments" 
+                  : "Continue"}
+                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               </Button>
-            ) : (
-              <div />
-            )}
-            <Button onClick={handleNext} disabled={isLoading} className="flex items-center gap-2">
-              {step === 'goal-specific' && selectedGoal && currentGoalStep === selectedGoal.questions.length - 1 
-                ? "Submit" 
-                : "Continue"}
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            </Button>
-          </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
